@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Configuración del servicio de accesibilidad de VozLibre.
+  - Lee todo el contenido de la ventana activa.
+  - Permite exploración táctil (habla lo que tocas).
+  - Permite realizar gestos (scroll automático al arrastrar la pantalla).
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeAllMask"
+    android:accessibilityFeedbackType="feedbackSpoken"
+    android:accessibilityFlags="flagDefault|flagRequestTouchExplorationMode|flagIncludeNotImportantViews|flagReportViewIds|flagRetrieveInteractiveWindows"
+    android:canPerformGestures="true"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/service_desc"
+    android:notificationTimeout="80"
+    android:settingsActivity="com.vozlibre.reader.MainActivity" />

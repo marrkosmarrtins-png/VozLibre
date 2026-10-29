@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Firma de release: si existe signing/vozlibre.jks (fuera del repositorio)
+// se firma con ella; si no, se firma con la clave de debug para que el
+// APK siempre sea instalable. Las contraseñas vienen de variables de entorno.
+def ksFile = rootProject.file("signing/vozlibre.jks")
+def ksExists = ksFile.exists()
+def storePass = System.getenv("VOZLIBRE_STORE_PASS") ?: "vozlibre2024"
+def keyPass = System.getenv("VOZLIBRE_KEY_PASS") ?: "vozlibre2024"
+
+android {
+    namespace 'com.vozlibre.reader'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.vozlibre.reader"
+        minSdk 24          // Android 7.0
+        targetSdk 34       // Android 14
+        versionCode 2      // se mantiene la versión 1.0; code 2 para actualizar sobre la 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        if (ksExists) {
+            release {
+                storeFile ksFile
+                storePassword storePass
+                keyAlias 'vozlibre'
+                keyPassword keyPass
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig ksExists ? signingConfigs.release : signingConfigs.debug
+        }
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+// Sin dependencias externas: solo la API de Android.
+// Esto mantiene el proyecto 100% auditable y ligero.
+dependencies {
+}
