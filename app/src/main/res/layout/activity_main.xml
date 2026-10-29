@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="@color/primary"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/version_line"
+            android:textColor="@color/textSoft"
+            android:textSize="13sp" />
+
+        <!-- Descripción completa de lo que hace la app -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:lineSpacingExtra="4dp"
+            android:text="@string/app_description"
+            android:textColor="@color/textMain"
+            android:textSize="15sp" />
+
+        <!-- Estado del lector -->
+        <TextView
+            android:id="@+id/txtStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/textMain" />
+
+        <Button
+            android:id="@+id/btnActivate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:backgroundTint="@color/primary"
+            android:text="@string/btn_activate"
+            android:textColor="@color/white" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/hint_activate"
+            android:textColor="@color/textSoft"
+            android:textSize="13sp" />
+
+        <!-- Estado de la exploración táctil (independencia del lector) -->
+        <TextView
+            android:id="@+id/txtTouch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/textMain" />
+
+        <Button
+            android:id="@+id/btnTouchFix"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:backgroundTint="@color/accent"
+            android:text="@string/btn_touch_fix"
+            android:textColor="@color/white"
+            android:visibility="gone" />
+
+        <!-- ===== Voz y lectura ===== -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/section_voice"
+            android:textColor="@color/textMain"
+            android:textSize="19sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/lbl_engine"
+            android:textColor="@color/textSoft" />
+
+        <Spinner
+            android:id="@+id/spnEngine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:padding="6dp" />
+
+        <TextView
+            android:id="@+id/txtEngines"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/engine_scanning"
+            android:textColor="@color/textSoft"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnRescanEngines"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_rescan_engines"
+            android:textAllCaps="false"
+            android:textColor="@color/primary"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/lblRate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/lbl_rate"
+            android:textColor="@color/textSoft" />
+
+        <SeekBar
+            android:id="@+id/seekRate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="150"
+            android:progress="50" />
+
+        <TextView
+            android:id="@+id/lblPitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/lbl_pitch"
+            android:textColor="@color/textSoft" />
+
+        <SeekBar
+            android:id="@+id/seekPitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="50" />
+
+        <TextView
+            android:id="@+id/lblDelay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/lbl_delay"
+            android:textColor="@color/textSoft" />
+
+        <SeekBar
+            android:id="@+id/seekDelay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="17"
+            android:progress="6" />
+
+        <Button
+            android:id="@+id/btnDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/accent"
+            android:text="@string/btn_demo"
+            android:textColor="@color/white" />
+
+        <!-- ===== Vibración y sonido ===== -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/section_feedback"
+            android:textColor="@color/textMain"
+            android:textSize="19sp"
+            android:textStyle="bold" />
+
+        <Switch
+            android:id="@+id/swVibrate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:checked="true"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="@string/sw_vibrate"
+            android:textColor="@color/textMain"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/lblVib"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/lbl_vib"
+            android:textColor="@color/textSoft" />
+
+        <SeekBar
+            android:id="@+id/seekVib"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="60" />
+
+        <Switch
+            android:id="@+id/swSound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:checked="true"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="@string/sw_sound"
+            android:textColor="@color/textMain"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/lblSound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/lbl_sound"
+            android:textColor="@color/textSoft" />
+
+        <SeekBar
+            android:id="@+id/seekSound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="70" />
+
+        <!-- ===== Exploración ===== -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/section_explore"
+            android:textColor="@color/textMain"
+            android:textSize="19sp"
+            android:textStyle="bold" />
+
+        <Switch
+            android:id="@+id/swTouch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:checked="true"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="@string/sw_touch"
+            android:textColor="@color/textMain"
+            android:textSize="15sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:lineSpacingExtra="3dp"
+            android:text="@string/hint_touch"
+            android:textColor="@color/textSoft"
+            android:textSize="13sp" />
+
+        <!-- Actualizaciones automáticas -->
+        <Button
+            android:id="@+id/btnCheckUpdates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:backgroundTint="@color/primary"
+            android:text="@string/btn_check_updates"
+            android:textColor="@color/white" />
+
+        <!-- Botones principales -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnApply"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/primary"
+                android:text="@string/btn_apply"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnAbout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/textSoft"
+                android:text="@string/btn_about"
+                android:textColor="@color/white" />
+        </LinearLayout>
+
+        <!-- Enlace directo al código fuente -->
+        <Button
+            android:id="@+id/btnSource"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/btn_source"
+            android:textAllCaps="false"
+            android:textColor="@color/primary"
+            android:textSize="15sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="12dp"
+            android:gravity="center"
+            android:text="@string/version_line"
+            android:textColor="@color/textSoft"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

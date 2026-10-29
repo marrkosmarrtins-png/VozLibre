@@ -1,0 +1,10 @@
+# Herramientas locales, no publicar
+signing/
+local.properties
+.gradle/
+app/build/
+build/
+tools/
+*.jks
+*.keystore
+.idea/

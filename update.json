@@ -1,0 +1,7 @@
+{
+  "versionCode": 4,
+  "versionName": "1.0.3",
+  "apkUrl": "https://github.com/marrkosmarrtins-png/VozLibre/releases/download/v1.0.3/VozLibre-1.0.3.apk",
+  "sizeBytes": 119312,
+  "notes": "· VozLibre funciona solo: ya no necesita TalkBack ni otro lector; activa y sostiene la exploración táctil por sí mismo.\n· Sonidos propios para lectura, navegación, alertas, aciertos y errores.\n· Corregido: se cargan TODOS los motores de voz instalados, no solo los del sistema.\n· Nuevo: actualizaciones automáticas (notificación y diálogo con versión, tamaño y novedades; botones «Más tarde» y «Descargar»).\n· Nuevo: carpeta interna de descargas y permiso para instalar paquetes.\n· Barrido a izquierda y derecha y parada limpia al cambiar de aplicación."
+}

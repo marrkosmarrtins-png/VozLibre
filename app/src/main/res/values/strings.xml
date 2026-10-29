@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VozLibre</string>
+    <string name="service_label">VozLibre – Lector de pantalla libre</string>
+    <string name="service_desc">Lector de pantalla libre e independiente: lee en voz alta el contenido de la pantalla, arrastra el scroll a su paso, anuncia cada elemento que tocas, funciona sin TalkBack ni otros lectores y trae sus propios sonidos.</string>
+
+    <string name="repo_url">https://github.com/marrkosmarrtins-png/VozLibre</string>
+    <string name="version_line">Versión 1.0.3 · Software libre (GNU GPLv3)</string>
+
+    <!-- Descripción general de la app (arriba de la pantalla principal) -->
+    <string name="app_description">VozLibre es un lector de pantalla libre, gratuito e independiente: lee en voz alta lo que aparece en tu pantalla, recorre el contenido arrastrando el scroll a su paso y te dice qué botón, texto o casilla estás tocando. No necesita TalkBack ni ningún otro lector: funciona solo, trae sus propios sonidos y solo se conecta a internet para buscar actualizaciones. Todo el código es público.</string>
+
+    <!-- Estado y activación -->
+    <string name="status_active">El lector está activo ✔</string>
+    <string name="status_inactive">El lector no está activo ✘</string>
+    <string name="status_touch_on">Exploración táctil activa ✔</string>
+    <string name="status_touch_off">Exploración táctil sin activar</string>
+    <string name="btn_activate">Activar en Accesibilidad</string>
+    <string name="btn_touch_fix">Activar exploración táctil</string>
+    <string name="hint_activate">Si el lector no está activo, ábrelo aquí y concede el permiso de accesibilidad. No hace falta nada más.</string>
+    <string name="touch_needs_service">Activa primero el lector en Accesibilidad y vuelve a intentarlo.</string>
+    <string name="touch_requested">VozLibre volvió a pedir el permiso. Si no aparece el diálogo, desactiva y vuelve a activar VozLibre en Accesibilidad y toca Aceptar cuando pregunte por la exploración táctil.</string>
+
+    <!-- Sección voz -->
+    <string name="section_voice">Voz y lectura</string>
+    <string name="lbl_engine">Motor de voz (todos los instalados)</string>
+    <string name="engine_system">Motor del sistema (recomendado)</string>
+    <string name="engine_system_default_suffix">— predeterminado del sistema</string>
+    <string name="engines_found">Motores de voz encontrados: %1$d</string>
+    <string name="engine_scanning">Buscando motores de voz…</string>
+    <string name="btn_rescan_engines">Volver a buscar motores de voz</string>
+    <string name="lbl_rate">Ritmo de la voz</string>
+    <string name="lbl_pitch">Tono de la voz</string>
+    <string name="lbl_delay">Pausa entre páginas al arrastrar el scroll</string>
+    <string name="btn_demo">Escuchar demo</string>
+
+    <!-- Sección vibración y sonido -->
+    <string name="section_feedback">Vibración y sonido</string>
+    <string name="sw_vibrate">Vibrar al anunciar cada elemento</string>
+    <string name="lbl_vib">Fuerza de la vibración</string>
+    <string name="sw_sound">Sonidos propios de navegación</string>
+    <string name="lbl_sound">Volumen de los sonidos</string>
+
+    <!-- Sección exploración -->
+    <string name="section_explore">Exploración de la pantalla</string>
+    <string name="sw_touch">Hablar lo que toco con el dedo</string>
+    <string name="hint_touch">Con esta opción, tocar un elemento lo anuncia en voz alta (por ejemplo: «Iniciar sesión, botón») y el doble toque lo activa. VozLibre activa esta exploración por sí mismo, sin necesidad de TalkBack ni de otro lector.</string>
+
+    <!-- Botones principales -->
+    <string name="btn_apply">Aplicar cambios</string>
+    <string name="btn_about">Acerca de VozLibre</string>
+    <string name="btn_source">Código fuente</string>
+    <string name="btn_check_updates">Buscar actualizaciones</string>
+    <string name="applied_ok">Cambios aplicados ✔</string>
+    <string name="demo_needs_service">Activa primero el lector en Accesibilidad para oír la demo con tu motor de voz.</string>
+
+    <!-- Diálogo Acerca de -->
+    <string name="about_title">Acerca de VozLibre</string>
+    <string name="about_message">VozLibre 1.0.3 — Lector de pantalla libre, gratuito e independiente para Android.\n\n• Funciona SOLO: no necesita TalkBack ni otro lector; activa la exploración táctil por sí mismo y trae sus propios sonidos.\n• Lee toda la pantalla y arrastra el scroll a su paso, página tras página.\n• Barrido con deslizar a la derecha (siguiente) y a la izquierda (anterior), con marco verde.\n• Exploración táctil: anuncia el botón, texto, casilla o campo que tocas, con su tipo y estado.\n• Voz a tu medida: lista TODOS los motores de voz instalados, con ritmo y tono ajustables.\n• Actualizaciones automáticas con notificación y diálogo (versión, tamaño y novedades).\n\nEs software libre bajo la licencia GNU GPLv3: puedes usarlo, estudiarlo, modificarlo y compartirlo. Escrito en Java, sin librerías de terceros ni rastreadores: todo el código está publicado y auditable.</string>
+    <string name="dialog_close">Cerrar</string>
+
+    <!-- Frases habladas por el lector -->
+    <string name="tts_welcome">VozLibre iniciado. Soy tu lector de pantalla libre y funciono por mi cuenta.</string>
+    <string name="tts_te_dialog_hint">Si apareció un diálogo del sistema, toque Aceptar para permitir que VozLibre explore la pantalla con el dedo.</string>
+    <string name="tts_te_on_now">Exploración táctil activada.</string>
+    <string name="tts_te_confirmed">Navegación táctil activa. Desliza a la derecha para ir al siguiente elemento, a la izquierda para el anterior, hacia arriba para leer toda la pantalla y hacia abajo para detener.</string>
+    <string name="tts_touch_needed">VozLibre necesita la exploración táctil para responder a tus dedos. Abre VozLibre y pulsa el botón Activar exploración táctil, o desactiva y activa VozLibre otra vez en Accesibilidad y toca Aceptar en el diálogo.</string>
+    <string name="tts_start_reading">Lectura continua iniciada.</string>
+    <string name="tts_stopped">Lectura detenida.</string>
+    <string name="tts_end_of_content">Fin del contenido.</string>
+    <string name="tts_no_content">No hay contenido que leer.</string>
+    <string name="tts_password_field">Campo de contraseña.</string>
+    <string name="tts_no_element">No hay elementos.</string>
+    <string name="tts_sweep_started">Modo barrido.</string>
+    <string name="tts_no_element_text">Elemento sin texto.</string>
+    <string name="tts_window">Pantalla</string>
+    <string name="tts_test">Hola, soy VozLibre, tu lector de pantalla libre. Así suena mi voz con el motor que has elegido.</string>
+    <string name="tts_disabled">Lector desactivado. Hasta pronto.</string>
+
+    <!-- Tipos de elemento (hablados) -->
+    <string name="type_button">botón</string>
+    <string name="type_text">texto</string>
+    <string name="type_edit">campo de texto</string>
+    <string name="type_checkbox">casilla</string>
+    <string name="type_radio">opción</string>
+    <string name="type_switch">interruptor</string>
+    <string name="type_slider">control deslizante</string>
+    <string name="type_image">imagen</string>
+    <string name="type_list">lista</string>
+    <string name="type_web">contenido web</string>
+    <string name="type_element">elemento</string>
+
+    <!-- Estados (hablados) -->
+    <string name="state_checked">marcado</string>
+    <string name="state_not_checked">sin marcar</string>
+    <string name="state_selected">seleccionado</string>
+    <string name="state_disabled">desactivado</string>
+
+    <!-- Notificación de control -->
+    <string name="notif_channel">Control de VozLibre</string>
+    <string name="notif_title">VozLibre activo</string>
+    <string name="notif_text">Toca para abrir · usa los botones para leer</string>
+    <string name="notif_read">▶ Leer pantalla</string>
+    <string name="notif_next">▶▶ Barrido</string>
+    <string name="notif_stop">✖ Silenciar</string>
+    <string name="notif_disable">Desactivar lector</string>
+
+    <!-- Actualizaciones -->
+    <string name="update_channel">Novedades de VozLibre</string>
+    <string name="update_checking">Buscando actualizaciones…</string>
+    <string name="update_none">Ya tienes la versión más reciente de VozLibre.</string>
+    <string name="update_error">No se pudo buscar actualizaciones. Revisa tu conexión.</string>
+    <string name="notif_update_title">Nueva versión de VozLibre disponible</string>
+    <string name="notif_update_text">Toca para descargar la versión %1$s</string>
+    <string name="dlg_update_title">VozLibre %1$s disponible</string>
+    <string name="dlg_update_size">Tamaño de la descarga: %1$s</string>
+    <string name="dlg_update_notes_label">Novedades y correcciones:</string>
+    <string name="btn_download">Descargar</string>
+    <string name="btn_later">Más tarde</string>
+    <string name="downloading">Descargando actualización…</string>
+    <string name="dlg_download_done_title">Descarga completa</string>
+    <string name="download_saved">Guardado en:\n%1$s</string>
+    <string name="btn_install_now">Instalar ahora</string>
+    <string name="download_error">No se pudo descargar la actualización. Revisa tu conexión y vuelve a intentarlo.</string>
+    <string name="install_blocked">Permite «Instalar apps desconocidas» para VozLibre y vuelve a pulsar Instalar.</string>
+</resources>
