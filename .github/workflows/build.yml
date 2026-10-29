@@ -18,11 +18,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Instalar SDK de Android
-        uses: android-actions/setup-android@v3
+      # El runner de GitHub ya incluye el SDK de Android ($ANDROID_HOME).
+      - name: Aceptar licencias del SDK de Android
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - name: Compilar APK (debug, instalable)
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Guardar APK como artefacto
         uses: actions/upload-artifact@v4
