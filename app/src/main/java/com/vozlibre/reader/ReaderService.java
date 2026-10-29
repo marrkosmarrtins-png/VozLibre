@@ -18,6 +18,7 @@ import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ public class ReaderService extends AccessibilityService {
     public static final String ACTION_READ_ALL = "com.vozlibre.reader.READ_ALL";
     public static final String ACTION_SWEEP_NEXT = "com.vozlibre.reader.SWEEP_NEXT";
     public static final String ACTION_STOP = "com.vozlibre.reader.STOP";
+    public static final String ACTION_DISABLE = "com.vozlibre.reader.DISABLE";
 
     /** Instancia activa del servicio; null cuando el servicio está desactivado. */
     public static volatile ReaderService instance;
@@ -64,6 +66,9 @@ public class ReaderService extends AccessibilityService {
     private TextToSpeech tts;
     private volatile boolean ttsReady = false;
     private String activeEnginePackage = null;   // motor realmente en uso
+    private String pendingEnginePackage = null;  // motor que estamos inicializando
+    private int ttsInitAttempts = 0;             // evita bucles si un motor falla
+    private boolean engineFallbackDone = false;  // ya caímos al motor del sistema
     private volatile int mode = MODE_IDLE;
 
     private List<AccessibilityNodeInfo> nodes = new ArrayList<>();
@@ -93,9 +98,12 @@ public class ReaderService extends AccessibilityService {
         overlay = new HighlightOverlay(getApplicationContext());
         feedback = new FeedbackHelper(getApplicationContext());
         loadPrefs();
+        ttsInitAttempts = 0;
         applyServiceFlags();
         initTts(settings.engine);
         showNotification();
+        registerTouchStateListener();
+        verifyTouchExploration();
     }
 
     @Override
@@ -112,6 +120,13 @@ public class ReaderService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        AccessibilityManager am =
+                (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
+        if (am != null) {
+            try {
+                am.removeTouchExplorationStateChangeListener(touchStateListener);
+            } catch (Exception ignored) { }
+        }
         stopAllInternal();
         if (tts != null) {
             try { tts.shutdown(); } catch (Exception ignored) { }
@@ -135,6 +150,12 @@ public class ReaderService extends AccessibilityService {
             if (mode != MODE_SWEEP) startSweep(); else sweepNext();
         } else if (ACTION_STOP.equals(action)) {
             stopAll();
+        } else if (ACTION_DISABLE.equals(action)) {
+            // Desactiva el servicio por completo desde cualquier pantalla:
+            // ya no hace falta buscar el botón «Desactivar» en la app.
+            stopAllInternal();
+            announce(R.string.tts_disabled);
+            handler.postDelayed(this::disableSelf, 1500);
         }
         return START_NOT_STICKY;
     }
@@ -147,6 +168,8 @@ public class ReaderService extends AccessibilityService {
      * voz de Google), nunca uno impuesto por el fabricante.
      */
     private void initTts(String preferredEngine) {
+        if (ttsInitAttempts >= 3) return; // un motor roto no debe tumbar el lector
+        ttsInitAttempts++;
         String engine = (preferredEngine != null && !preferredEngine.trim().isEmpty())
                 ? preferredEngine.trim()
                 : Settings.Secure.getString(getContentResolver(),
@@ -157,15 +180,18 @@ public class ReaderService extends AccessibilityService {
             ttsReady = false;
         }
         activeEnginePackage = engine;
+        pendingEnginePackage = engine;
         try {
             if (engine != null && !engine.isEmpty()) {
                 tts = new TextToSpeech(getApplicationContext(), ttsCallback, engine);
             } else {
+                pendingEnginePackage = null;
                 tts = new TextToSpeech(getApplicationContext(), ttsCallback);
             }
         } catch (Exception e) {
             // Motor elegido no disponible: caemos al motor por defecto.
             activeEnginePackage = null;
+            pendingEnginePackage = null;
             tts = new TextToSpeech(getApplicationContext(), ttsCallback);
         }
     }
@@ -174,6 +200,14 @@ public class ReaderService extends AccessibilityService {
         @Override
         public void onInit(int status) {
             ttsReady = (status == TextToSpeech.SUCCESS);
+            // El motor elegido no arrancó: caemos UNA vez al motor del
+            // sistema para no quedarnos mudo.
+            if (!ttsReady && !engineFallbackDone
+                    && pendingEnginePackage != null && !pendingEnginePackage.isEmpty()) {
+                engineFallbackDone = true;
+                handler.post(() -> initTts(""));
+                return;
+            }
             if (ttsReady && tts != null) {
                 Locale es = new Locale("es", "ES");
                 int r = tts.setLanguage(es);
@@ -261,6 +295,7 @@ public class ReaderService extends AccessibilityService {
             case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED: {
                 // Anunciar el título de la pantalla nueva (como un lector real).
                 if (mode == MODE_IDLE) {
+                    overlayHideSafe(); // borra marcos viejos al cambiar de pantalla
                     String title = firstTextOf(event);
                     if (title != null && !title.trim().isEmpty()
                             && !title.equalsIgnoreCase(lastSpoken)) {
@@ -277,6 +312,9 @@ public class ReaderService extends AccessibilityService {
                         stopAll();
                         announce(R.string.tts_stopped);
                     }
+                } else if (mode == MODE_SWEEP && readingPackage != null) {
+                    // El barrido tampoco puede «seguir» en otra aplicación.
+                    if (!activeWindowMatches()) stopAll();
                 }
                 break;
             }
@@ -382,10 +420,14 @@ public class ReaderService extends AccessibilityService {
                 announce(R.string.tts_stopped);
                 return true;
             case GESTURE_SWIPE_RIGHT:
-                if (mode != MODE_SWEEP) startSweep(); else sweepNext();
+                // Elemento SIGUIENTE (como TalkBack).
+                if (mode == MODE_READING) stopAllInternal();
+                if (mode != MODE_SWEEP) startSweep(false); else sweepNext();
                 return true;
             case GESTURE_SWIPE_LEFT:
-                if (mode == MODE_SWEEP) sweepPrevious();
+                // Elemento ANTERIOR, aunque no estemos en modo barrido.
+                if (mode == MODE_READING) stopAllInternal();
+                if (mode != MODE_SWEEP) startSweep(true); else sweepPrevious();
                 return true;
             default:
                 return false;
@@ -419,6 +461,12 @@ public class ReaderService extends AccessibilityService {
 
     private void speakNextInReading() {
         if (mode != MODE_READING) return;
+        // Si cambió la ventana activa, la lectura se corta AQUÍ MISMA: no
+        // puede seguir hablando una página que ya no está en pantalla.
+        if (!activeWindowMatches()) {
+            stopAllInternal();
+            return;
+        }
         if (index >= nodes.size()) {
             if (settings.scrollDelayMs >= 0) {
                 scrollToNextPage();
@@ -529,6 +577,14 @@ public class ReaderService extends AccessibilityService {
     // ------------------------------------------------------------------ barrido
 
     public void startSweep() {
+        startSweep(false);
+    }
+
+    /**
+     * Barrido elemento por elemento. backward=true empieza por el último
+     * (para deslizar a la IZQUIERDA y retroceder sin haber estado barriendo).
+     */
+    public void startSweep(boolean backward) {
         stopAllInternal();
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) {
@@ -536,14 +592,21 @@ public class ReaderService extends AccessibilityService {
             return;
         }
         mode = MODE_SWEEP;
+        readingPackage = String.valueOf(root.getPackageName());
         collectNodes(root, false);
-        index = -1;
+        if (nodes.isEmpty()) {
+            mode = MODE_IDLE;
+            announce(R.string.tts_no_element);
+            return;
+        }
+        index = backward ? nodes.size() : -1;
         announce(R.string.tts_sweep_started);
-        handler.postDelayed(this::sweepNext, 1200);
+        handler.postDelayed(backward ? this::sweepPrevious : this::sweepNext, 1200);
     }
 
     public void sweepNext() {
         if (mode != MODE_SWEEP) return;
+        if (!activeWindowMatches()) { stopAllInternal(); return; }
         if (index + 1 >= nodes.size()) {
             AccessibilityNodeInfo root = getRootInActiveWindow();
             if (root == null) { announce(R.string.tts_no_element); return; }
@@ -557,6 +620,7 @@ public class ReaderService extends AccessibilityService {
 
     public void sweepPrevious() {
         if (mode != MODE_SWEEP) return;
+        if (!activeWindowMatches()) { stopAllInternal(); return; }
         if (index > 0) index--;
         speakSweepNode();
     }
@@ -564,15 +628,48 @@ public class ReaderService extends AccessibilityService {
     private void speakSweepNode() {
         if (mode != MODE_SWEEP) return;
         if (index < 0 || index >= nodes.size()) return;
-        AccessibilityNodeInfo node = nodes.get(index);
-        String text = readableText(node);
-        String type = typeForClass(node.getClassName());
-        if (text == null || text.trim().isEmpty()) text = type;
-        else text = text + ", " + type;
-        overlayShowSafe(node);
-        node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
-        tick();
-        speak(text, TextToSpeech.QUEUE_FLUSH, "sweep");
+        try {
+            AccessibilityNodeInfo node = nodes.get(index);
+            String text = readableText(node);
+            String type = typeForClass(node.getClassName());
+            if (text == null || text.trim().isEmpty()) text = type;
+            else text = text + ", " + type;
+            String state = stateForNode(node);
+            if (!state.isEmpty()) text = text + ", " + state;
+            overlayShowSafe(node);
+            node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+            tick();
+            speak(text, TextToSpeech.QUEUE_FLUSH, "sweep");
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** ¿La ventana activa sigue siendo la que estamos leyendo/barriendo? */
+    private boolean activeWindowMatches() {
+        if (readingPackage == null) return true;
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        String pkg = root != null ? String.valueOf(root.getPackageName()) : null;
+        return readingPackage.equals(pkg);
+    }
+
+    /** Estado hablado consultando directamente el nodo. */
+    private String stateForNode(AccessibilityNodeInfo node) {
+        List<String> states = new ArrayList<>();
+        try {
+            if (node.isCheckable()) {
+                states.add(node.isChecked() ? getString(R.string.state_checked)
+                        : getString(R.string.state_not_checked));
+            }
+            if (node.isSelected()) states.add(getString(R.string.state_selected));
+            if (!node.isEnabled()) states.add(getString(R.string.state_disabled));
+        } catch (Exception ignored) {
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < states.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(states.get(i));
+        }
+        return sb.toString();
     }
 
     // ------------------------------------------------------------------ recogida de nodos
@@ -684,6 +781,8 @@ public class ReaderService extends AccessibilityService {
         Prefs.Holder before = new Prefs.Holder();
         before.engine = activeEnginePackage != null ? activeEnginePackage : "";
         loadPrefs();
+        ttsInitAttempts = 0;
+        engineFallbackDone = false;
         if (tts != null && ttsReady) {
             tts.setSpeechRate(settings.rate);
             tts.setPitch(settings.pitch);
@@ -699,6 +798,66 @@ public class ReaderService extends AccessibilityService {
 
     public void testVoice() {
         speak(getString(R.string.tts_test), TextToSpeech.QUEUE_FLUSH, "test");
+    }
+
+    // ------------------------------------------------- exploración táctil
+
+    private void registerTouchStateListener() {
+        try {
+            AccessibilityManager am =
+                    (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
+            if (am != null) am.addTouchExplorationStateChangeListener(touchStateListener);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private final AccessibilityManager.TouchExplorationStateChangeListener touchStateListener =
+            new AccessibilityManager.TouchExplorationStateChangeListener() {
+                @Override
+                public void onTouchExplorationStateChanged(boolean enabled) {
+                    if (enabled && settings.touchExplore && mode == MODE_IDLE) {
+                        announce(getString(R.string.tts_touch_on_now));
+                    }
+                }
+            };
+
+    /** Avisa en voz alta si la exploración táctil sigue sin estar activa. */
+    private void verifyTouchExploration() {
+        if (!settings.touchExplore) return;
+        handler.postDelayed(() -> {
+            if (instance == null) return;
+            AccessibilityManager am =
+                    (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
+            if (am != null && !am.isTouchExplorationEnabled()) {
+                announce(getString(R.string.tts_touch_needed));
+            }
+        }, 5000);
+    }
+
+    /**
+     * MainActivity la llama cuando el usuario quiere activar la exploración
+     * táctil y el aviso de Android no apareció (o lo rechazó): quita y vuelve
+     * a poner la bandera para que el sistema vuelva a mostrar su aviso
+     * «¿Usar VozLibre con la exploración táctil?».
+     */
+    public void requestTouchExplorationGrant() {
+        AccessibilityManager am =
+                (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
+        if (am != null && am.isTouchExplorationEnabled()) {
+            announce(getString(R.string.tts_touch_on_now));
+            return;
+        }
+        AccessibilityServiceInfo info = getServiceInfo();
+        if (info == null) return;
+        info.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        setServiceInfo(info);
+        handler.postDelayed(() -> {
+            AccessibilityServiceInfo i2 = getServiceInfo();
+            if (i2 == null) return;
+            i2.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+            setServiceInfo(i2);
+            verifyTouchExploration();
+        }, 300);
     }
 
     @SuppressWarnings("deprecation")
@@ -731,6 +890,7 @@ public class ReaderService extends AccessibilityService {
         PendingIntent pRead = actionPi(ACTION_READ_ALL, 11);
         PendingIntent pNext = actionPi(ACTION_SWEEP_NEXT, 12);
         PendingIntent pStop = actionPi(ACTION_STOP, 13);
+        PendingIntent pDisable = actionPi(ACTION_DISABLE, 14);
 
         Notification.Builder b = Build.VERSION.SDK_INT >= 26
                 ? new Notification.Builder(this, CHANNEL_ID)
@@ -746,7 +906,9 @@ public class ReaderService extends AccessibilityService {
                 .addAction(android.R.drawable.ic_media_next,
                         getString(R.string.notif_next), pNext)
                 .addAction(android.R.drawable.ic_menu_close_clear_cancel,
-                        getString(R.string.notif_stop), pStop);
+                        getString(R.string.notif_stop), pStop)
+                .addAction(android.R.drawable.ic_delete,
+                        getString(R.string.notif_disable), pDisable);
         nm.notify(NOTIF_ID, b.build());
     }
 

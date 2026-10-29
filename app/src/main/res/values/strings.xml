@@ -13,6 +13,8 @@
     <!-- Estado y activación -->
     <string name="status_active">El lector está activo ✔</string>
     <string name="status_inactive">El lector no está activo ✘</string>
+    <string name="status_touch_on">Exploración táctil: activa ✔ — toca un elemento para oírlo, doble toque para activarlo</string>
+    <string name="status_touch_off">Exploración táctil: NO está activa ✘ — sin ella, los toques se ejecutan en vez de anunciarse</string>
     <string name="btn_activate">Activar en Accesibilidad</string>
     <string name="hint_activate">Si el lector no está activo, ábrelo aquí y concede el permiso de accesibilidad. No hace falta nada más.</string>
 
@@ -36,7 +38,10 @@
     <!-- Sección exploración -->
     <string name="section_explore">Exploración de la pantalla</string>
     <string name="sw_touch">Hablar lo que toco con el dedo</string>
-    <string name="hint_touch">Con esta opción, tocar un elemento lo anuncia en voz alta (por ejemplo: «Iniciar sesión, botón») y el doble toque lo activa.</string>
+    <string name="hint_touch">Tocar un elemento lo anuncia en voz alta (por ejemplo: «Iniciar sesión, botón») y el doble toque lo activa. Deslizar a la derecha / izquierda pasa al elemento siguiente / anterior. Si apagas esta opción, volverás a tocar a ciegas.</string>
+    <string name="btn_touch_fix">Activar exploración táctil</string>
+    <string name="touch_needs_service">Activa primero el lector en Accesibilidad; al activarlo, Android mostrará el aviso de exploración táctil.</string>
+    <string name="touch_requested">Si Android muestra el aviso «¿Usar VozLibre con la exploración táctil?», acéptalo. Luego vuelve a VozLibre para comprobar el estado.</string>
 
     <!-- Botones principales -->
     <string name="btn_apply">Aplicar cambios</string>
@@ -61,6 +66,9 @@
     <string name="tts_no_element_text">Elemento sin texto.</string>
     <string name="tts_window">Pantalla</string>
     <string name="tts_test">Hola, soy VozLibre, tu lector de pantalla libre. Así suena mi voz con el motor que has elegido.</string>
+    <string name="tts_touch_needed">Atención: la exploración táctil no está activa. Por eso, al tocar, los botones se pulsan en vez de anunciarse, y los deslizamientos no navegan. Abre VozLibre y pulsa Activar exploración táctil, o desactiva y vuelve a activar VozLibre en Accesibilidad y acepta el aviso de Android.</string>
+    <string name="tts_touch_on_now">Exploración táctil activa. Toca un elemento para oírlo y da un doble toque para activarlo.</string>
+    <string name="tts_disabled">VozLibre desactivado. Hasta pronto.</string>
 
     <!-- Tipos de elemento (hablados) -->
     <string name="type_button">botón</string>
@@ -88,4 +96,5 @@
     <string name="notif_read">▶ Leer pantalla</string>
     <string name="notif_next">▶▶ Barrido</string>
     <string name="notif_stop">✖ Silenciar</string>
+    <string name="notif_disable">Desactivar lector</string>
 </resources>

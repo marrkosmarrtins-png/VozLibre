@@ -46,6 +46,14 @@
             android:textStyle="bold"
             android:textColor="@color/textMain" />
 
+        <!-- Estado de la exploración táctil (sin ella no se puede tocar y oír) -->
+        <TextView
+            android:id="@+id/txtTouch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp" />
+
         <Button
             android:id="@+id/btnActivate"
             android:layout_width="match_parent"
@@ -235,6 +243,15 @@
             android:text="@string/hint_touch"
             android:textColor="@color/textSoft"
             android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnTouchFix"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:backgroundTint="@color/accent"
+            android:text="@string/btn_touch_fix"
+            android:textColor="@color/white" />
 
         <!-- Botones principales -->
         <LinearLayout

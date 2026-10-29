@@ -38,13 +38,12 @@ public class MainActivity extends Activity {
     private Spinner spnEngine;
     private SeekBar seekRate, seekPitch, seekDelay, seekVib, seekSound;
     private Switch swVibrate, swSound, swTouch;
-    private TextView lblRate, lblPitch, lblDelay, lblVib, lblSound, txtStatus;
+    private TextView lblRate, lblPitch, lblDelay, lblVib, lblSound, txtStatus, txtTouch;
 
     /** Lista de motores TTS instalados: etiqueta + paquete. */
     private final List<String> engineLabels = new ArrayList<>();
     private final List<String> enginePackages = new ArrayList<>();
     private String chosenEngine = "";   // "" = motor del sistema
-    private TextToSpeech probeTts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +51,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         txtStatus = findViewById(R.id.txtStatus);
+        txtTouch = findViewById(R.id.txtTouch);
         spnEngine = findViewById(R.id.spnEngine);
         seekRate = findViewById(R.id.seekRate);
         seekPitch = findViewById(R.id.seekPitch);
@@ -71,6 +71,7 @@ public class MainActivity extends Activity {
         Button btnApply = findViewById(R.id.btnApply);
         Button btnAbout = findViewById(R.id.btnAbout);
         Button btnSource = findViewById(R.id.btnSource);
+        Button btnTouchFix = findViewById(R.id.btnTouchFix);
 
         // Valores guardados
         SharedPreferences p = Prefs.get(this);
@@ -118,6 +119,7 @@ public class MainActivity extends Activity {
 
         btnAbout.setOnClickListener(v -> showAboutDialog());
         btnSource.setOnClickListener(v -> openSourceCode());
+        btnTouchFix.setOnClickListener(v -> requestTouchGrant());
 
         // Permiso de notificaciones en Android 13+ (la notificación es el
         // mando a distancia del lector).
@@ -137,10 +139,6 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (probeTts != null) {
-            try { probeTts.shutdown(); } catch (Exception ignored) { }
-            probeTts = null;
-        }
         super.onDestroy();
     }
 
@@ -151,6 +149,13 @@ public class MainActivity extends Activity {
         txtStatus.setText(enabled ? R.string.status_active : R.string.status_inactive);
         // Colores en crudo: NUNCA getResource/colorRes (evita el crash antiguo).
         txtStatus.setTextColor(enabled ? 0xFF15803D : 0xFFB91C1C);
+        if (txtTouch != null) {
+            AccessibilityManager am = (AccessibilityManager)
+                    getSystemService(Context.ACCESSIBILITY_SERVICE);
+            boolean te = am != null && am.isTouchExplorationEnabled();
+            txtTouch.setText(te ? R.string.status_touch_on : R.string.status_touch_off);
+            txtTouch.setTextColor(te ? 0xFF15803D : 0xFFB45309);
+        }
     }
 
     private boolean isServiceEnabled() {
@@ -188,44 +193,51 @@ public class MainActivity extends Activity {
 
     // ------------------------------------------------------------------ motores de voz
 
-    /** Lista los motores TTS instalados; el motor del sistema va primero. */
+    /**
+     * Lista TODOS los motores TTS instalados (del sistema e instalados por
+     * el usuario). getEngines() consulta el gestor de paquetes: NO necesita
+     * que el motor se inicialice, así que se llama en el acto. Así la lista
+     * sale completa aunque el motor actual esté fallando.
+     */
     private void loadEngineList() {
         engineLabels.clear();
         enginePackages.clear();
         engineLabels.add(getString(R.string.engine_system));
         enginePackages.add("");
 
-        probeTts = new TextToSpeech(getApplicationContext(), status -> {
-            if (status != TextToSpeech.SUCCESS || probeTts == null) return;
+        TextToSpeech probe = null;
+        try {
+            probe = new TextToSpeech(getApplicationContext(), null);
             String systemEngine = Settings.Secure.getString(getContentResolver(),
                     Settings.Secure.TTS_DEFAULT_SYNTH);
-            List<TextToSpeech.EngineInfo> engines = probeTts.getEngines();
-            List<String> labels = new ArrayList<>();
-            List<String> pkgs = new ArrayList<>();
+            List<TextToSpeech.EngineInfo> engines = probe.getEngines();
             if (engines != null) {
                 for (TextToSpeech.EngineInfo e : engines) {
+                    if (e == null || e.name == null) continue;
                     String label = e.label != null && !e.label.trim().isEmpty()
                             ? e.label : e.name;
                     if (e.name.equals(systemEngine)) {
                         label += " " + getString(R.string.engine_system_default_suffix);
                     }
-                    labels.add(label);
-                    pkgs.add(e.name);
+                    engineLabels.add(label);
+                    enginePackages.add(e.name);
                 }
             }
-            final List<String> fLabels = labels, fPkgs = pkgs;
-            runOnUiThread(() -> {
-                engineLabels.addAll(fLabels);
-                enginePackages.addAll(fPkgs);
-                ArrayAdapter<String> ad = new ArrayAdapter<>(MainActivity.this,
-                        android.R.layout.simple_spinner_item, engineLabels);
-                ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spnEngine.setAdapter(ad);
-                // Seleccionar el motor guardado (o el del sistema)
-                int sel = Math.max(0, enginePackages.indexOf(chosenEngine));
-                spnEngine.setSelection(sel);
-            });
-        });
+        } catch (Exception ignored) {
+            // Si ni eso funciona, al menos queda «Motor del sistema».
+        } finally {
+            if (probe != null) {
+                try { probe.shutdown(); } catch (Exception ignored) { }
+            }
+        }
+
+        ArrayAdapter<String> ad = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, engineLabels);
+        ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spnEngine.setAdapter(ad);
+        // Seleccionar el motor guardado (o el del sistema)
+        int sel = Math.max(0, enginePackages.indexOf(chosenEngine));
+        spnEngine.setSelection(sel);
 
         spnEngine.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -262,6 +274,28 @@ public class MainActivity extends Activity {
         if (svc != null) svc.applySettings();
 
         Toast.makeText(this, R.string.applied_ok, Toast.LENGTH_SHORT).show();
+    }
+
+    // ----------------------------------------------------------------- exploración táctil
+
+    /**
+     * Pide al sistema el permiso de exploración táctil (el aviso
+     * «¿Usar VozLibre con la exploración táctil?»). Sin ese permiso, tocar
+     * un elemento lo PULSA en vez de anunciarlo y los deslizamientos no
+     * navegan: es lo que pasa si el aviso se rechazó o no llegó a verse.
+     */
+    private void requestTouchGrant() {
+        ReaderService svc = ReaderService.instance;
+        if (svc == null) {
+            Toast.makeText(this, R.string.touch_needs_service, Toast.LENGTH_LONG).show();
+            try {
+                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+            } catch (Exception ignored) { }
+            return;
+        }
+        svc.applySettings();
+        svc.requestTouchExplorationGrant();
+        Toast.makeText(this, R.string.touch_requested, Toast.LENGTH_LONG).show();
     }
 
     // ------------------------------------------------------------------ acerca de / código fuente
