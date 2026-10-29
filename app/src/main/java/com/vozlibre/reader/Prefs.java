@@ -20,6 +20,8 @@ public final class Prefs {
     public static final String KEY_VIB_STRENGTH = "vib_strength"; // int 0..100 (porcentaje)
     public static final String KEY_SOUND_ON = "sound_on";     // boolean
     public static final String KEY_SOUND_VOL = "sound_volume"; // int 0..100
+    public static final String KEY_PENDING_DL = "pending_download_id";  // long (-1 = nada)
+    public static final String KEY_LAST_NOTIFIED_UPDATE = "last_notified_update"; // int code
 
     private Prefs() { }
 

@@ -59,9 +59,16 @@ public class ReaderService extends AccessibilityService {
     private static final int MAX_NODES = 600;
     private static final int MAX_SPOKEN_MEMORY = 300;
     private static final String CHANNEL_ID = "vozlibre_control";
+    private static final String UPDATE_CHANNEL_ID = "vozlibre_updates";
     private static final int NOTIF_ID = 1;
+    private static final int UPDATE_NOTIF_ID = 2;
+    /** Frecuencia de revisión de versiones nuevas mientras el lector está activo. */
+    private static final long UPDATE_CHECK_MS = 6L * 60 * 60 * 1000; // 6 horas
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+    /** Handler aparte para el revisor de actualizaciones: stopAllInternal() no
+     *  debe cancelar la revisión periódica de versiones. */
+    private final Handler updateHandler = new Handler(Looper.getMainLooper());
 
     private TextToSpeech tts;
     private volatile boolean ttsReady = false;
@@ -104,6 +111,7 @@ public class ReaderService extends AccessibilityService {
         showNotification();
         registerTouchStateListener();
         verifyTouchExploration();
+        scheduleUpdateChecks();
     }
 
     @Override
@@ -120,6 +128,7 @@ public class ReaderService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        updateHandler.removeCallbacksAndMessages(null);
         AccessibilityManager am =
                 (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
         if (am != null) {
@@ -870,6 +879,70 @@ public class ReaderService extends AccessibilityService {
             info.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
         }
         setServiceInfo(info);
+    }
+
+    // ------------------------------------------------- actualizaciones
+
+    private void scheduleUpdateChecks() {
+        updateHandler.postDelayed(updateCheckLoop, 60000); // 1er chequeo a los 60 s
+    }
+
+    private final Runnable updateCheckLoop = new Runnable() {
+        @Override
+        public void run() {
+            checkUpdateSilently();
+            updateHandler.postDelayed(this, UPDATE_CHECK_MS);
+        }
+    };
+
+    /** Revisa updates.json y avisa UNA sola vez por cada versión nueva. */
+    private void checkUpdateSilently() {
+        UpdateChecker.checkAsync(getApplicationContext(), info -> {
+            if (info == null || info.versionCode <= installedVersionCode()) return;
+            if (Prefs.get(this).getInt(Prefs.KEY_LAST_NOTIFIED_UPDATE, -1)
+                    == info.versionCode) return;
+            Prefs.get(this).edit()
+                    .putInt(Prefs.KEY_LAST_NOTIFIED_UPDATE, info.versionCode).apply();
+            showUpdateNotification(info);
+        });
+    }
+
+    private int installedVersionCode() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /** Notificación «hay una nueva versión disponible de VozLibre». */
+    private void showUpdateNotification(UpdateChecker.UpdateInfo info) {
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (nm == null) return;
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel ch = new NotificationChannel(UPDATE_CHANNEL_ID,
+                    getString(R.string.upd_channel), NotificationManager.IMPORTANCE_DEFAULT);
+            nm.createNotificationChannel(ch);
+        }
+        Intent open = new Intent(this, MainActivity.class)
+                .setAction("com.vozlibre.SHOW_UPDATE")
+                .putExtra("show_update", true);
+        PendingIntent pi = PendingIntent.getActivity(this, 20, open,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        String sizeTxt = info.sizeBytes > 0
+                ? String.format(new Locale("es"), " (%.1f MB)", info.sizeBytes / 1048576f)
+                : "";
+        Notification.Builder b = Build.VERSION.SDK_INT >= 26
+                ? new Notification.Builder(this, UPDATE_CHANNEL_ID)
+                : new Notification.Builder(this);
+        b.setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(getString(R.string.notif_update_title))
+                .setContentText(getString(R.string.notif_update_text) + sizeTxt)
+                .setContentIntent(pi)
+                .setAutoCancel(true)
+                .addAction(android.R.drawable.stat_sys_download,
+                        getString(R.string.notif_update_action), pi);
+        nm.notify(UPDATE_NOTIF_ID, b.build());
     }
 
     // ------------------------------------------------------------------ notificación

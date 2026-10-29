@@ -1,0 +1,7 @@
+{
+  "versionCode": 4,
+  "versionName": "1.0.0",
+  "sizeBytes": 49288,
+  "apkUrl": "https://github.com/marrkosmarrtins-png/VozLibre/releases/download/v1.0.0-code4/VozLibre-1.0.0.apk",
+  "description": "Novedades del código 4:\n• Actualizaciones automáticas: notificación «Nueva versión disponible» y diálogo con versión, tamaño y novedades, con botones «Más tarde» y «Descargar».\n• El APK se guarda en Descargas/VozLibre y la instalación pide el permiso de apps desconocidas cuando falta.\n\nIncluye las correcciones del código 3:\n• Tocar un elemento ya no lo pulsa: se anuncia (tipo y estado) y el doble toque lo activa.\n• Deslizar a la derecha / izquierda pasa al elemento siguiente / anterior.\n• Aparecen TODOS los motores de voz (del sistema e instalados por ti).\n• La lectura se corta al salir de una app y los marcos verdes no quedan sueltos.\n• La notificación tiene «Desactivar lector» para apagarlo todo desde cualquier pantalla.\n\nSi tocar o deslizar no responden, abre VozLibre y pulsa «Activar exploración táctil», luego acepta el aviso de Android."
+}

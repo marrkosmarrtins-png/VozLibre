@@ -21,8 +21,9 @@ contenido nuevo, página tras página.
 | 🤚 **Anuncios reales** | Dice el TIPO de cada elemento («botón», «casilla», «campo de texto»…) y su ESTADO («marcado», «seleccionado», «desactivado»), y anuncia el título de cada pantalla nueva. |
 | 📳 **Vibración y sonido** | Vibración al anunciar elementos con fuerza ajustable (1–100 %) y sonidos de navegación con volumen ajustable. |
 | 🗣 **Motor de voz del sistema** | Usa por defecto el motor TTS que ya tienes configurado en el sistema (p. ej. Reconocimiento de voz de Google); puedes cambiarlo desde la app. |
-| 🔔 **Notificación de control** | Botones «Leer pantalla», «Barrido» y «Silenciar» disponibles desde cualquier app. |
+| 🔔 **Notificación de control** | Botones «Leer pantalla», «Barrido», «Silenciar» y **«Desactivar lector»** disponibles desde cualquier app. |
 | 🖐 **Gestos** | Arriba = leer todo · Abajo = detener · Derecha = siguiente · Izquierda = anterior. |
+| ⬇️ **Actualizaciones automáticas** | Consulta `updates.json` en GitHub, avisa con una notificación («Nueva versión disponible») y muestra un diálogo con nombre de versión, **tamaño** y **descripción de novedades/arreglos**, con botones **«Más tarde»** y **«Descargar»**. Baja el APK a `Descargas/VozLibre/`, pide el permiso de apps desconocidas y ofrece instalarlo. |
 | ℹ️ **Acerca de** | Diálogo con la descripción completa y botón «Código fuente» que abre el repositorio. |
 
 ## Instalación del APK
@@ -76,11 +77,14 @@ Tras el `push`, entra en **Actions** en GitHub y descarga el APK compilado.
 ```
 VozLibre/
 ├── .github/workflows/build.yml   ← compilación automática en la nube
+├── updates.json                  ← alimenta el verificador de actualizaciones
+├── CHANGELOG.md                  ← historial de versiones: problemas y soluciones
 ├── app/src/main/
 │   ├── AndroidManifest.xml
 │   ├── java/com/vozlibre/reader/
 │   │   ├── ReaderService.java    ← motor: lectura continua + scroll automático
-│   │   ├── MainActivity.java     ← ajustes y guía
+│   │   ├── MainActivity.java     ← ajustes, guía y diálogo de actualización
+│   │   ├── UpdateChecker.java    ← consulta updates.json (sin librerías)
 │   │   ├── HighlightOverlay.java ← marco verde del elemento leído
 │   │   └── Prefs.java            ← ajustes persistentes
 │   └── res/                      ← interfaz en español + iconos
@@ -88,13 +92,23 @@ VozLibre/
 └── README.md
 ```
 
+## Publicar una versión nueva (para el mantenedor)
+
+1. Sube `versionCode` en `app/build.gradle` y compila el APK firmado.
+2. Crea un **release** en GitHub con la etiqueta `v1.0.0-codeN` y adjunta el APK.
+3. Actualiza `updates.json` en la rama `main` (versión, tamaño real del APK, URL
+   del release y descripción de novedades). La app instalada lo detecta,
+   notifica y ofrece descargar la actualización.
+
 ## Limitaciones conocidas (v1.0)
 
+- Los gestos y el «tocar para oír» requieren aceptar el permiso de **exploración
+  táctil** que Android pide aparte (la app lo detecta, avisa en voz alta y trae
+  el botón «Activar exploración táctil» para volver a mostrar el aviso).
 - En apps con contenidos muy repetidos (mismo texto varias veces) la lectura
   continua puede omitir repeticiones para no re-leer lo ya leído tras el scroll.
-- Los gestos de navegación requieren tener activada la exploración táctil.
 - La descripción con IA de imágenes queda preparada para futuras versiones;
-  esta versión no envía datos a ningún servicio externo.
+  la app solo consulta GitHub para buscar actualizaciones y nunca envía datos.
 
 ## Licencia
 

@@ -18,7 +18,7 @@ android {
         applicationId "com.vozlibre.reader"
         minSdk 24          // Android 7.0
         targetSdk 34       // Android 14
-        versionCode 3      // se mantiene la versión 1.0; code 3 para actualizar sobre la 2
+        versionCode 4      // se mantiene la versión 1.0; code 4 añade actualizaciones automáticas
         versionName "1.0.0"
     }
 

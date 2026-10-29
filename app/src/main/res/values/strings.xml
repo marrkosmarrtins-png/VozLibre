@@ -8,7 +8,7 @@
     <string name="version_line">Versión 1.0 · Software libre (GNU GPLv3)</string>
 
     <!-- Descripción general de la app (arriba de la pantalla principal) -->
-    <string name="app_description">VozLibre es un lector de pantalla libre y gratuito: lee en voz alta lo que aparece en tu pantalla, recorre el contenido arrastrando el scroll a su paso y te dice qué botón, texto o casilla estás tocando. No recoge datos ni se conecta a internet: todo el código es público.</string>
+    <string name="app_description">VozLibre es un lector de pantalla libre y gratuito: lee en voz alta lo que aparece en tu pantalla, recorre el contenido arrastrando el scroll a su paso y te dice qué botón, texto o casilla estás tocando. Busca sus actualizaciones en GitHub y te avisa cuando hay una versión nueva, pero no recoge ningún dato personal: todo el código es público.</string>
 
     <!-- Estado y activación -->
     <string name="status_active">El lector está activo ✔</string>
@@ -52,7 +52,7 @@
 
     <!-- Diálogo Acerca de -->
     <string name="about_title">Acerca de VozLibre</string>
-    <string name="about_message">VozLibre 1.0 — Lector de pantalla libre y gratuito para Android.\n\n• Lee toda la pantalla y arrastra el scroll a su paso, página tras página.\n• Barrido elemento por elemento con marco verde en pantalla.\n• Exploración táctil: anuncia el botón, texto, casilla o campo que tocas, con su tipo y estado.\n• Voz a tu medida: elige el motor de voz de tu sistema, el ritmo y el tono.\n• Vibración y sonidos de navegación con fuerza y volumen ajustables.\n\nEs software libre bajo la licencia GNU GPLv3: puedes usarlo, estudiarlo, modificarlo y compartirlo. Escrito en Java, sin librerías de terceros ni rastreadores: todo el código está publicado y auditable.</string>
+    <string name="about_message">VozLibre 1.0 — Lector de pantalla libre y gratuito para Android.\n\n• Lee toda la pantalla y arrastra el scroll a su paso, página tras página.\n• Barrido elemento por elemento con marco verde en pantalla.\n• Exploración táctil: anuncia el botón, texto, casilla o campo que tocas, con su tipo y estado; doble toque para activar y deslizamientos para navegar.\n• Voz a tu medida: elige el motor de voz de tu sistema, el ritmo y el tono.\n• Vibración y sonidos de navegación con fuerza y volumen ajustables.\n• Avisos de versión nueva con diálogo de descarga e instalación (el APK se guarda en Descargas/VozLibre).\n\nEs software libre bajo la licencia GNU GPLv3: puedes usarlo, estudiarlo, modificarlo y compartirlo. Escrito en Java, sin librerías de terceros ni rastreadores: solo consulta GitHub para buscar actualizaciones, nunca envía datos.</string>
     <string name="dialog_close">Cerrar</string>
 
     <!-- Frases habladas por el lector -->
@@ -97,4 +97,22 @@
     <string name="notif_next">▶▶ Barrido</string>
     <string name="notif_stop">✖ Silenciar</string>
     <string name="notif_disable">Desactivar lector</string>
+
+    <!-- Actualizaciones automáticas -->
+    <string name="updates_url">https://raw.githubusercontent.com/marrkosmarrtins-png/VozLibre/main/updates.json</string>
+    <string name="upd_channel">Avisos de actualización</string>
+    <string name="notif_update_title">Nueva versión de VozLibre disponible</string>
+    <string name="notif_update_text">Toca para ver qué cambia y descargarla</string>
+    <string name="notif_update_action">Descargar ahora</string>
+    <string name="upd_dialog_title">Actualización disponible</string>
+    <string name="btn_download">Descargar</string>
+    <string name="btn_later">Más tarde</string>
+    <string name="upd_dm_desc">Descargando la actualización de VozLibre…</string>
+    <string name="upd_downloading">Descargando… te avisamos cuando termine. El archivo se guarda en Descargas/VozLibre.</string>
+    <string name="upd_download_failed">La descarga falló. Revisa tu conexión y prueba otra vez.</string>
+    <string name="upd_installed_prompt">Actualización descargada y guardada en Descargas/VozLibre. ¿Instalar ahora?</string>
+    <string name="btn_install">Instalar</string>
+    <string name="upd_need_install_perm">Android necesita permiso para instalar apps desconocidas: concédelo a VozLibre en la pantalla siguiente y vuelve a abrir el archivo.</string>
+    <string name="upd_downloaded">Actualización descargada.</string>
+    <string name="upd_open_error">No se pudo abrir el instalador. El APK quedó guardado en Descargas/VozLibre para instalarlo a mano.</string>
 </resources>

@@ -3,12 +3,18 @@ package com.vozlibre.reader;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.view.View;
@@ -22,6 +28,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +51,23 @@ public class MainActivity extends Activity {
     private final List<String> engineLabels = new ArrayList<>();
     private final List<String> enginePackages = new ArrayList<>();
     private String chosenEngine = "";   // "" = motor del sistema
+
+    // ---- actualizaciones ----
+    private static final long CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 min entre consultas
+    private static long lastCheckAt = 0;
+    private DownloadManager downloadManager;
+    private long pendingDlId = -1;
+    private Uri pendingInstallUri = null;
+
+    /** Aviso del sistema: la descarga del APK terminó. */
+    private final BroadcastReceiver downloadDoneReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+            if (id == -1 || id != pendingDlId) return;
+            checkDownloadResult(id);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,16 +153,29 @@ public class MainActivity extends Activity {
         }
 
         loadEngineList();
+
+        // Descargas de actualizaciones: el sistema avisa al terminar.
+        downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+        try {
+            registerReceiver(downloadDoneReceiver,
+                    new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        } catch (Exception ignored) {
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         refreshStatus();
+        resumeUpdateFlow();
     }
 
     @Override
     protected void onDestroy() {
+        try {
+            unregisterReceiver(downloadDoneReceiver);
+        } catch (Exception ignored) {
+        }
         super.onDestroy();
     }
 
@@ -296,6 +333,195 @@ public class MainActivity extends Activity {
         svc.applySettings();
         svc.requestTouchExplorationGrant();
         Toast.makeText(this, R.string.touch_requested, Toast.LENGTH_LONG).show();
+    }
+
+    // ----------------------------------------------------------------- actualizaciones
+
+    private int installedVersionCode() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Flujo de actualización al entrar a la app:
+     * 1) si Android ya nos dio permiso de instalación, continúa donde quedó;
+     * 2) revisa si hay descarga terminada de una vez anterior (la app pudo
+     *    cerrarse mientras bajaba);
+     * 3) consulta updates.json y muestra el diálogo si hay versión nueva.
+     */
+    private void resumeUpdateFlow() {
+        // 1) el usuario volvió de conceder el permiso de instalación
+        if (pendingInstallUri != null
+                && (Build.VERSION.SDK_INT < 26
+                    || getPackageManager().canRequestPackageInstalls())) {
+            Uri uri = pendingInstallUri;
+            pendingInstallUri = null;
+            promptInstall(uri);
+        }
+
+        // 2) descargas quedadas de sesiones anteriores
+        long saved = Prefs.get(this).getLong(Prefs.KEY_PENDING_DL, -1);
+        if (saved >= 0 && downloadManager != null) {
+            Cursor c = null;
+            try {
+                c = downloadManager.query(new DownloadManager.Query().setFilterById(saved));
+                if (c != null && c.moveToFirst()) {
+                    int status = c.getInt(
+                            c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                        Prefs.get(this).edit().putLong(Prefs.KEY_PENDING_DL, -1).apply();
+                        pendingDlId = -1;
+                        Uri uri = downloadManager.getUriForDownloadedFile(saved);
+                        if (uri != null) promptInstall(uri);
+                    } else if (status == DownloadManager.STATUS_FAILED) {
+                        Prefs.get(this).edit().putLong(Prefs.KEY_PENDING_DL, -1).apply();
+                        pendingDlId = -1;
+                        Toast.makeText(this, R.string.upd_download_failed,
+                                Toast.LENGTH_LONG).show();
+                    }
+                    // en curso: se espera el aviso del sistema
+                }
+            } catch (Exception ignored) {
+            } finally {
+                if (c != null) c.close();
+            }
+        }
+
+        // 3) ¿hay versión nueva? (aviso desde la notificación = consulta forzada)
+        boolean forced = getIntent() != null
+                && getIntent().getBooleanExtra("show_update", false);
+        long now = SystemClock.elapsedRealtime();
+        if (forced || now - lastCheckAt > CHECK_INTERVAL_MS) {
+            lastCheckAt = now;
+            UpdateChecker.checkAsync(this, info -> {
+                if (isFinishing() || isDestroyed()) return;
+                if (info != null && info.versionCode > installedVersionCode()) {
+                    showUpdateDialog(info);
+                }
+            });
+        }
+    }
+
+    /** Diálogo «Actualización disponible»: nombre, tamaño y novedades. */
+    private void showUpdateDialog(UpdateChecker.UpdateInfo info) {
+        String sizeTxt = info.sizeBytes > 0
+                ? String.format(Locale.getDefault(), "%.1f MB", info.sizeBytes / 1048576f)
+                : "—";
+        StringBuilder msg = new StringBuilder();
+        msg.append("Versión ").append(info.versionName)
+           .append(" (código ").append(info.versionCode).append(")\n");
+        msg.append("Tamaño: ").append(sizeTxt).append("\n\n");
+        if (info.description != null && !info.description.trim().isEmpty()) {
+            msg.append(info.description.trim());
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.upd_dialog_title)
+                .setMessage(msg.toString())
+                .setPositiveButton(R.string.btn_download,
+                        (d, w) -> startDownload(info))
+                .setNegativeButton(R.string.btn_later, null)
+                .show();
+    }
+
+    /** Descarga el APK con DownloadManager a Descargas/VozLibre/. */
+    private void startDownload(UpdateChecker.UpdateInfo info) {
+        if (downloadManager == null) {
+            Toast.makeText(this, R.string.upd_download_failed, Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            String fileName = "VozLibre-" + info.versionName
+                    + "-code" + info.versionCode + ".apk";
+            // la carpeta debe existir antes de encolar
+            File dstDir = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS), "VozLibre");
+            dstDir.mkdirs();
+
+            DownloadManager.Request req =
+                    new DownloadManager.Request(Uri.parse(info.apkUrl));
+            req.setTitle(getString(R.string.app_name) + " " + info.versionName);
+            req.setDescription(getString(R.string.upd_dm_desc));
+            req.setNotificationVisibility(DownloadManager.Request
+                    .VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            req.setMimeType("application/vnd.android.package-archive");
+            req.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
+                    "VozLibre/" + fileName);
+
+            pendingDlId = downloadManager.enqueue(req);
+            Prefs.get(this).edit().putLong(Prefs.KEY_PENDING_DL, pendingDlId).apply();
+            Toast.makeText(this, R.string.upd_downloading, Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.upd_download_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** Al terminar la descarga: ofrecer la instalación. */
+    private void checkDownloadResult(long id) {
+        int status = -1;
+        Cursor c = null;
+        try {
+            c = downloadManager.query(new DownloadManager.Query().setFilterById(id));
+            if (c != null && c.moveToFirst()) {
+                status = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (c != null) c.close();
+        }
+        Prefs.get(this).edit().putLong(Prefs.KEY_PENDING_DL, -1).apply();
+        pendingDlId = -1;
+
+        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+            Uri uri = downloadManager.getUriForDownloadedFile(id);
+            if (uri != null) {
+                promptInstall(uri);
+            } else {
+                Toast.makeText(this, R.string.upd_download_failed,
+                        Toast.LENGTH_LONG).show();
+            }
+        } else if (status == DownloadManager.STATUS_FAILED) {
+            Toast.makeText(this, R.string.upd_download_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** Confirma la instalación y pide el permiso de apps desconocidas si falta. */
+    private void promptInstall(Uri apkUri) {
+        if (Build.VERSION.SDK_INT >= 26
+                && !getPackageManager().canRequestPackageInstalls()) {
+            pendingInstallUri = apkUri;
+            Toast.makeText(this, R.string.upd_need_install_perm, Toast.LENGTH_LONG).show();
+            try {
+                startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:" + getPackageName())));
+            } catch (Exception e) {
+                try {
+                    startActivity(new Intent(
+                            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES));
+                } catch (Exception ignored) { }
+            }
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.upd_dialog_title)
+                .setMessage(R.string.upd_installed_prompt)
+                .setPositiveButton(R.string.btn_install, (d, w) -> doInstall(apkUri))
+                .setNegativeButton(R.string.btn_later, null)
+                .show();
+    }
+
+    private void doInstall(Uri apkUri) {
+        try {
+            Intent i = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+            i.setDataAndType(apkUri, "application/vnd.android.package-archive");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.upd_open_error, Toast.LENGTH_LONG).show();
+        }
     }
 
     // ------------------------------------------------------------------ acerca de / código fuente

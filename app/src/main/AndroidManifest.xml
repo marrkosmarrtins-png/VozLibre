@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Vibración de respuesta al anunciar elementos -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Consulta anónima de updates.json (GitHub) para avisar de versiones nuevas -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Descarga el APK nuevo y lo instala; Android pide confirmación aparte -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:allowBackup="true"
