@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Necesario para la notificación de control y los avisos de versión nueva -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Vibración de respuesta al anunciar elementos -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Comprobar y descargar actualizaciones de VozLibre (solo GitHub) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Instalar la actualización descargada, si el usuario lo autoriza -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- Ver TODOS los motores de texto a voz instalados (Android 11+ oculta
+         los paquetes por defecto; con esta declaración los vemos todos:
+         los del sistema y los que el usuario instale aparte). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+
+        <!-- Pantalla principal: instrucciones, ajustes de voz y actualizaciones -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Servicio de accesibilidad: el corazón del lector de pantalla -->
+        <service
+            android:name=".ReaderService"
+            android:exported="true"
+            android:label="@string/service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- Entrega al instalador del sistema el APK descargado
+             (reemplaza a FileProvider para no usar librerías externas) -->
+        <provider
+            android:name=".ApkProvider"
+            android:authorities="com.vozlibre.reader.apk"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>

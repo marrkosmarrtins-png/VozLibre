@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Configuración del servicio de accesibilidad de VozLibre.
+  - Lee todo el contenido de la ventana activa.
+  - canRequestTouchExplorationMode="true" es OBLIGATORIO: declara la
+    CAPABILIDAD del sistema que autoriza la exploración táctil (igual que
+    hace TalkBack). Sin este atributo, Android ignora la petición y la
+    exploración solo se activa si otro lector la enciende.
+  - flagRequestTouchExplorationMode pide la exploración en sí.
+  - Permite realizar gestos (scroll automático al arrastrar la pantalla).
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeAllMask"
+    android:accessibilityFeedbackType="feedbackSpoken"
+    android:accessibilityFlags="flagDefault|flagRequestTouchExplorationMode|flagIncludeNotImportantViews|flagReportViewIds|flagRetrieveInteractiveWindows"
+    android:canRequestTouchExplorationMode="true"
+    android:canPerformGestures="true"
+    android:canRetrieveWindowContent="true"
+    android:isAccessibilityTool="true"
+    android:description="@string/service_desc"
+    android:notificationTimeout="80"
+    android:settingsActivity="com.vozlibre.reader.MainActivity" />
