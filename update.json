@@ -1,0 +1,7 @@
+{
+  "versionCode": 7,
+  "versionName": "1.0.6",
+  "apkUrl": "https://github.com/marrkosmarrtins-png/VozLibre/releases/download/v1.0.6/VozLibre-1.0.6.apk",
+  "sizeBytes": 283944,
+  "notes": "· SONIDOS ARREGLADOS: van ahora por el MISMO flujo de audio que la voz (si se oye la voz, se oye el clic, el diálogo y cada acción); sonidos nuevos más claros y cargan al instante.\n· EL FOCO VA DONDE TOCAS EN TODA LA PANTALLA: teclado (tocar una tecla la anuncia), barra de estado (dice la hora y la batería), barra de navegación y zonas vacías: nunca silencio.\n· DESLIZADORES como TalkBack: con un deslizador enfocado, desliza arriba o abajo y se ajusta solo, anunciando su valor («70 por ciento»). Al barrer, cada deslizador también dice su valor.\n· VOCES: botón «Cargar todas las voces», selector de IDIOMA del motor y selector de VOCES disponibles para ese idioma (se recuerdan en cada arranque).\n· VELOCIDAD SÚPER RÁPIDA: respuesta inmediata al deslizar (sin esperas), menos pausa entre páginas (250 ms).\n· Mantienen todo lo anterior: lectura continua con arrastre de scroll, barrido bidireccional que desplaza las listas, seguimiento del foco y de los menús emergentes, todos los motores TTS y actualizaciones automáticas."
+}
