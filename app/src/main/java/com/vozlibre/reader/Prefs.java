@@ -11,7 +11,7 @@ public final class Prefs {
 
     private static final String FILE = "vozlibre";
 
-    public static final String KEY_RATE = "rate";             // float 0.5 .. 2.0
+    public static final String KEY_RATE = "rate";             // float 0.5 .. 5.0
     public static final String KEY_PITCH = "pitch";           // float 0.5 .. 1.5
     public static final String KEY_DELAY = "scroll_delay";    // int ms 300 .. 2000
     public static final String KEY_TOUCH = "touch_explore";   // boolean
@@ -27,10 +27,15 @@ public final class Prefs {
         return ctx.getApplicationContext().getSharedPreferences(FILE, Context.MODE_PRIVATE);
     }
 
+    /** Velocidad EXTREMA por defecto: el usuario pidió un lector ultra rápido. */
+    public static final float DEFAULT_RATE = 2.5f;
+    /** Pausa corta entre páginas: menos espera, lectura más rápida. */
+    public static final int DEFAULT_SCROLL_DELAY = 450;
+
     public static void load(SharedPreferences p, Holder h) {
-        h.rate = p.getFloat(KEY_RATE, 1.0f);
+        h.rate = p.getFloat(KEY_RATE, DEFAULT_RATE);
         h.pitch = p.getFloat(KEY_PITCH, 1.0f);
-        h.scrollDelayMs = p.getInt(KEY_DELAY, 900);
+        h.scrollDelayMs = p.getInt(KEY_DELAY, DEFAULT_SCROLL_DELAY);
         h.touchExplore = p.getBoolean(KEY_TOUCH, true);
         h.engine = p.getString(KEY_ENGINE, "");
         h.vibOn = p.getBoolean(KEY_VIB_ON, true);
@@ -41,9 +46,9 @@ public final class Prefs {
 
     /** Contenedor simple de los valores actuales. */
     public static class Holder {
-        public float rate = 1.0f;
+        public float rate = DEFAULT_RATE;
         public float pitch = 1.0f;
-        public int scrollDelayMs = 900;
+        public int scrollDelayMs = DEFAULT_SCROLL_DELAY;
         public boolean touchExplore = true;
         public String engine = "";
         public boolean vibOn = true;

@@ -6,25 +6,33 @@ import android.media.SoundPool;
 import android.util.SparseIntArray;
 
 /**
- * Sonidos PROPIOS de VozLibre (earcons): pequeños tonos incluidos en la
- * propia aplicación para indicar inicio, parada, avance, retroceso,
- * alertas, aciertos y errores. VozLibre no depende de los sonidos de
- * ningún otro lector de pantalla ni del sistema: los trae consigo.
+ * Sonidos PROPIOS de VozLibre (earcons): UN SONIDO PARA CADA ACCIÓN del
+ * lector, incluidos en la propia aplicación. Los sonidos son del pack
+ * «Interface Sounds» de Kenney (licencia CC0), descargados e integrados en
+ * la app: toca/foco, activación/clic, pantalla o diálogo nuevo, scroll,
+ * inicio, parada, siguiente, anterior, alerta, acierto y error.
+ * VozLibre no depende de los sonidos de ningún otro lector de pantalla ni
+ * del sistema: los trae consigo.
  */
 public final class Earcons {
 
-    public static final int START = 0;    // lectura iniciada
+    public static final int START = 0;    // lectura continua iniciada
     public static final int STOP = 1;     // lectura detenida / fin
     public static final int NEXT = 2;     // siguiente elemento
     public static final int PREV = 3;     // elemento anterior
     public static final int ALERT = 4;    // diálogo o aviso importante
     public static final int SUCCESS = 5;  // algo se activó bien
     public static final int ERROR = 6;    // fallo (sin voz, sin red…)
+    public static final int FOCUS = 7;    // elemento tocado / con foco
+    public static final int CLICK = 8;    // activación (doble toque, clic)
+    public static final int WINDOW = 9;   // pantalla o diálogo nuevo
+    public static final int SCROLL = 10;  // la lista se desplazó
 
     private static final int[] RES = {
             R.raw.earcon_start, R.raw.earcon_stop, R.raw.earcon_next,
             R.raw.earcon_prev, R.raw.earcon_alert, R.raw.earcon_success,
-            R.raw.earcon_error
+            R.raw.earcon_error, R.raw.earcon_focus, R.raw.earcon_click,
+            R.raw.earcon_window, R.raw.earcon_scroll
     };
 
     private static volatile Earcons sInstance;
@@ -38,7 +46,7 @@ public final class Earcons {
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build();
         pool = new SoundPool.Builder()
-                .setMaxStreams(3)
+                .setMaxStreams(4)
                 .setAudioAttributes(attrs)
                 .build();
         for (int i = 0; i < RES.length; i++) {

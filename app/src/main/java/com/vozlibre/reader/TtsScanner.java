@@ -72,7 +72,10 @@ public final class TtsScanner {
         try {
             PackageManager pm = app.getPackageManager();
             Intent intent = new Intent("android.intent.action.TTS_SERVICE");
-            List<ResolveInfo> ris = pm.queryIntentServices(intent, 0);
+            // MATCH_ALL como AOSP TtsEngines: no perder motores con filtros
+            // no-DEFAULT; GET_META_DATA para etiquetas completas.
+            List<ResolveInfo> ris = pm.queryIntentServices(intent,
+                    PackageManager.GET_META_DATA | PackageManager.MATCH_ALL);
             if (ris != null) {
                 for (ResolveInfo ri : ris) {
                     if (ri == null || ri.serviceInfo == null) continue;

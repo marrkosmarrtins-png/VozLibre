@@ -138,7 +138,7 @@
             android:id="@+id/seekRate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:max="150"
+            android:max="450"
             android:progress="50" />
 
         <TextView

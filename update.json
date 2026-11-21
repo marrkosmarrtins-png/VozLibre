@@ -1,7 +1,7 @@
 {
-  "versionCode": 4,
-  "versionName": "1.0.3",
-  "apkUrl": "https://github.com/marrkosmarrtins-png/VozLibre/releases/download/v1.0.3/VozLibre-1.0.3.apk",
-  "sizeBytes": 119312,
-  "notes": "· VozLibre funciona solo: ya no necesita TalkBack ni otro lector; activa y sostiene la exploración táctil por sí mismo.\n· Sonidos propios para lectura, navegación, alertas, aciertos y errores.\n· Corregido: se cargan TODOS los motores de voz instalados, no solo los del sistema.\n· Nuevo: actualizaciones automáticas (notificación y diálogo con versión, tamaño y novedades; botones «Más tarde» y «Descargar»).\n· Nuevo: carpeta interna de descargas y permiso para instalar paquetes.\n· Barrido a izquierda y derecha y parada limpia al cambiar de aplicación."
+  "versionCode": 6,
+  "versionName": "1.0.5",
+  "apkUrl": "https://github.com/marrkosmarrtins-png/VozLibre/releases/download/v1.0.5/VozLibre-1.0.5.apk",
+  "sizeBytes": 329052,
+  "notes": "· Sigue tu dedo en TODA la pantalla: explorador táctil propio (arquitectura TalkBack) con hit-test instantáneo; doble toque activa y doble toque mantenido hace la pulsación larga.\n· Sigue el FOCO: anuncia los diálogos, los menús emergentes de la pulsación larga y los elementos que la app enfoca; los menús ahora se navegan con el barrido.\n· Las listas SE DESPLAZAN SOLAS al barrer: al llegar al último elemento visible, el contenedor (RecyclerView/ListView) avanza y siguen los elementos nuevos.\n· Sonido para CADA acción: 11 earcons reales del pack Interface Sounds de Kenney (CC0) — foco, clic, ventana/diálogo, scroll, inicio, parada, siguiente, anterior, alerta, acierto y error.\n· Velocidad extrema: ritmo por defecto 2.5x (hasta 5x), menos esperas al leer y al desplazar páginas.\n· Mantienen todo lo anterior: lectura continua con arrastre de scroll, barrido bidireccional, todos los motores TTS, actualizaciones automáticas y parada limpia al cambiar de app."
 }

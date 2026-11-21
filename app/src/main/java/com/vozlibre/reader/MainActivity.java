@@ -47,6 +47,7 @@ public class MainActivity extends Activity {
     private final List<String> enginePackages = new ArrayList<>();
     private String chosenEngine = "";   // "" = motor del sistema
     private boolean updateDialogShown = false;
+    private boolean noEnginesDialogShown = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -227,11 +228,13 @@ public class MainActivity extends Activity {
     // ------------------------------------------------------------------ etiquetas
 
     private void updateLabels() {
-        float rate = 0.5f + seekRate.getProgress() / 100f;      // 0.5 .. 2.0
+        float rate = 0.5f + seekRate.getProgress() / 100f;      // 0.5 .. 5.0
         float pitch = 0.5f + seekPitch.getProgress() / 100f;    // 0.5 .. 1.5
         int delay = 300 + seekDelay.getProgress() * 100;        // 300 .. 2000 ms
+        String ultra = rate >= 4.5f
+                ? " · " + getString(R.string.rate_ultra) : "";
         lblRate.setText(String.format(Locale.getDefault(),
-                "%s: %.1fx", getString(R.string.lbl_rate), rate));
+                "%s: %.1fx%s", getString(R.string.lbl_rate), rate, ultra));
         lblPitch.setText(String.format(Locale.getDefault(),
                 "%s: %.1fx", getString(R.string.lbl_pitch), pitch));
         lblDelay.setText(String.format(Locale.getDefault(),
@@ -269,10 +272,50 @@ public class MainActivity extends Activity {
                 spnEngine.setAdapter(ad);
                 int sel = Math.max(0, enginePackages.indexOf(chosenEngine));
                 spnEngine.setSelection(Math.min(sel, enginePackages.size() - 1));
-                txtEngines.setText(getString(R.string.engines_found,
-                        enginePackages.size() - 1));
+                int foundCount = enginePackages.size() - 1;
+                if (foundCount == 0) {
+                    txtEngines.setText(R.string.engines_none);
+                    showNoEnginesDialog();
+                } else {
+                    txtEngines.setText(getString(R.string.engines_found, foundCount));
+                }
             });
         }).start();
+    }
+
+    /**
+     * Sin NINGÚN motor TTS instalado (típico en teléfonos sin Google):
+     * diálogo-guía con sonido propio para instalar uno gratuito.
+     */
+    private void showNoEnginesDialog() {
+        if (noEnginesDialogShown) return;
+        noEnginesDialogShown = true;
+        Earcons.get(this).play(Earcons.ALERT, 0.8f);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.no_engines_title)
+                .setMessage(R.string.no_engines_msg)
+                .setPositiveButton(R.string.btn_find_rhvoice,
+                        (d, w) -> openStoreSearch("RHVoice"))
+                .setNeutralButton(R.string.btn_find_espeak,
+                        (d, w) -> openStoreSearch("eSpeak"))
+                .setNegativeButton(R.string.dialog_close, null)
+                .show();
+    }
+
+    /** Abre la tienda buscando un motor gratuito; si no hay tienda, el navegador. */
+    private void openStoreSearch(String query) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("market://search?q=" + query + "&c=apps")));
+        } catch (Exception e) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://play.google.com/store/search?q="
+                                + query + "&c=apps")));
+            } catch (Exception e2) {
+                Toast.makeText(this, query, Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     // ------------------------------------------------------------------ actualizaciones
@@ -299,6 +342,7 @@ public class MainActivity extends Activity {
                 UpdateManager.notifyUpdateAvailable(MainActivity.this, info);
                 if (!updateDialogShown || manual) {
                     updateDialogShown = true;
+                    Earcons.get(MainActivity.this).play(Earcons.ALERT, 0.8f);
                     UpdateManager.showUpdateDialog(MainActivity.this, info);
                 }
             }

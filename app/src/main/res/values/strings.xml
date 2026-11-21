@@ -5,7 +5,7 @@
     <string name="service_desc">Lector de pantalla libre e independiente: lee en voz alta el contenido de la pantalla, arrastra el scroll a su paso, anuncia cada elemento que tocas, funciona sin TalkBack ni otros lectores y trae sus propios sonidos.</string>
 
     <string name="repo_url">https://github.com/marrkosmarrtins-png/VozLibre</string>
-    <string name="version_line">Versión 1.0.3 · Software libre (GNU GPLv3)</string>
+    <string name="version_line">Versión 1.0.5 · Software libre (GNU GPLv3)</string>
 
     <!-- Descripción general de la app (arriba de la pantalla principal) -->
     <string name="app_description">VozLibre es un lector de pantalla libre, gratuito e independiente: lee en voz alta lo que aparece en tu pantalla, recorre el contenido arrastrando el scroll a su paso y te dice qué botón, texto o casilla estás tocando. No necesita TalkBack ni ningún otro lector: funciona solo, trae sus propios sonidos y solo se conecta a internet para buscar actualizaciones. Todo el código es público.</string>
@@ -19,7 +19,7 @@
     <string name="btn_touch_fix">Activar exploración táctil</string>
     <string name="hint_activate">Si el lector no está activo, ábrelo aquí y concede el permiso de accesibilidad. No hace falta nada más.</string>
     <string name="touch_needs_service">Activa primero el lector en Accesibilidad y vuelve a intentarlo.</string>
-    <string name="touch_requested">VozLibre volvió a pedir el permiso. Si no aparece el diálogo, desactiva y vuelve a activar VozLibre en Accesibilidad y toca Aceptar cuando pregunte por la exploración táctil.</string>
+    <string name="touch_requested">VozLibre volvió a pedir la exploración táctil. Si aún no responde a tus dedos, desactiva y vuelve a activar VozLibre en Accesibilidad.</string>
 
     <!-- Sección voz -->
     <string name="section_voice">Voz y lectura</string>
@@ -29,7 +29,7 @@
     <string name="engines_found">Motores de voz encontrados: %1$d</string>
     <string name="engine_scanning">Buscando motores de voz…</string>
     <string name="btn_rescan_engines">Volver a buscar motores de voz</string>
-    <string name="lbl_rate">Ritmo de la voz</string>
+    <string name="lbl_rate">Ritmo de la voz (0.5x – 5x)</string>
     <string name="lbl_pitch">Tono de la voz</string>
     <string name="lbl_delay">Pausa entre páginas al arrastrar el scroll</string>
     <string name="btn_demo">Escuchar demo</string>
@@ -44,7 +44,7 @@
     <!-- Sección exploración -->
     <string name="section_explore">Exploración de la pantalla</string>
     <string name="sw_touch">Hablar lo que toco con el dedo</string>
-    <string name="hint_touch">Con esta opción, tocar un elemento lo anuncia en voz alta (por ejemplo: «Iniciar sesión, botón») y el doble toque lo activa. VozLibre activa esta exploración por sí mismo, sin necesidad de TalkBack ni de otro lector.</string>
+    <string name="hint_touch">Con esta opción, tocar un elemento lo anuncia en voz alta en TODA la pantalla (por ejemplo: «Iniciar sesión, botón»); el doble toque lo activa y el doble toque mantenido hace la pulsación larga. VozLibre activa esta exploración por sí mismo, sin necesidad de TalkBack ni de otro lector.</string>
 
     <!-- Botones principales -->
     <string name="btn_apply">Aplicar cambios</string>
@@ -56,15 +56,15 @@
 
     <!-- Diálogo Acerca de -->
     <string name="about_title">Acerca de VozLibre</string>
-    <string name="about_message">VozLibre 1.0.3 — Lector de pantalla libre, gratuito e independiente para Android.\n\n• Funciona SOLO: no necesita TalkBack ni otro lector; activa la exploración táctil por sí mismo y trae sus propios sonidos.\n• Lee toda la pantalla y arrastra el scroll a su paso, página tras página.\n• Barrido con deslizar a la derecha (siguiente) y a la izquierda (anterior), con marco verde.\n• Exploración táctil: anuncia el botón, texto, casilla o campo que tocas, con su tipo y estado.\n• Voz a tu medida: lista TODOS los motores de voz instalados, con ritmo y tono ajustables.\n• Actualizaciones automáticas con notificación y diálogo (versión, tamaño y novedades).\n\nEs software libre bajo la licencia GNU GPLv3: puedes usarlo, estudiarlo, modificarlo y compartirlo. Escrito en Java, sin librerías de terceros ni rastreadores: todo el código está publicado y auditable.</string>
+    <string name="about_message">VozLibre 1.0.5 — Lector de pantalla libre, gratuito e independiente para Android, listo para ser tu lector principal.\n\n• Exploración táctil PROPIA (arquitectura TalkBack): sigue tu dedo por TODA la pantalla; doble toque activa y doble toque mantenido hace la pulsación larga.\n• Sigue el FOCO: anuncia los diálogos, menús emergentes y elementos que la app enfoca (los menús de la pulsación larga ahora se navegan).\n• Barrido que DESPLAZA LAS LISTAS: al llegar al último elemento visible, la lista se desplaza sola y siguen los nuevos.\n• Sonidos para cada acción (pack CC0 de Kenney): foco, clic, ventana/diálogo, scroll, inicio, parada, siguiente, anterior, alerta, acierto y error.\n• Velocidad extrema: ritmo por defecto 2.5x y hasta 5x, con respuesta inmediata.\n• Lee toda la pantalla y arrastra el scroll a su paso, página tras página.\n• Lista TODOS los motores de voz instalados; si el elegido falla prueba con otro; si no hay ninguno, te guía para instalar uno gratuito (RHVoice, eSpeak).\n• Actualizaciones automáticas con notificación y diálogo (versión, tamaño y novedades).\n\nEs software libre bajo la licencia GNU GPLv3: puedes usarlo, estudiarlo, modificarlo y compartirlo. Escrito en Java, sin librerías de terceros ni rastreadores: todo el código está publicado y auditable.</string>
     <string name="dialog_close">Cerrar</string>
 
     <!-- Frases habladas por el lector -->
     <string name="tts_welcome">VozLibre iniciado. Soy tu lector de pantalla libre y funciono por mi cuenta.</string>
-    <string name="tts_te_dialog_hint">Si apareció un diálogo del sistema, toque Aceptar para permitir que VozLibre explore la pantalla con el dedo.</string>
+    <string name="tts_te_dialog_hint">Si aparece un diálogo del sistema pidiendo la exploración táctil, tócalo y acepta. Si no aparece, VozLibre ya la activó por su cuenta.</string>
     <string name="tts_te_on_now">Exploración táctil activada.</string>
     <string name="tts_te_confirmed">Navegación táctil activa. Desliza a la derecha para ir al siguiente elemento, a la izquierda para el anterior, hacia arriba para leer toda la pantalla y hacia abajo para detener.</string>
-    <string name="tts_touch_needed">VozLibre necesita la exploración táctil para responder a tus dedos. Abre VozLibre y pulsa el botón Activar exploración táctil, o desactiva y activa VozLibre otra vez en Accesibilidad y toca Aceptar en el diálogo.</string>
+    <string name="tts_touch_needed">VozLibre necesita la exploración táctil para responder a tus dedos. Intentando activarla ahora mismo. Si no responde, desactiva y vuelve a activar VozLibre en Accesibilidad, o pulsa Activar en el aviso de VozLibre.</string>
     <string name="tts_start_reading">Lectura continua iniciada.</string>
     <string name="tts_stopped">Lectura detenida.</string>
     <string name="tts_end_of_content">Fin del contenido.</string>
@@ -76,6 +76,26 @@
     <string name="tts_window">Pantalla</string>
     <string name="tts_test">Hola, soy VozLibre, tu lector de pantalla libre. Así suena mi voz con el motor que has elegido.</string>
     <string name="tts_disabled">Lector desactivado. Hasta pronto.</string>
+
+    <!-- Independencia: diálogo propio de exploración táctil (estilo TalkBack) -->
+    <string name="te_dialog_title">VozLibre necesita la exploración táctil</string>
+    <string name="te_dialog_msg">La exploración táctil es lo que permite que VozLibre responda a tus dedos: anunciar lo que tocas y activar con doble toque.\n\nToca «Activar» para que VozLibre la active ahora mismo.\n\nSi sigue sin funcionar, pulsa «Ajustes», desactiva VozLibre y actívalo otra vez en Accesibilidad.</string>
+    <string name="te_btn_activate">Activar</string>
+    <string name="te_btn_settings">Ajustes</string>
+    <string name="te_btn_exit">Salir de VozLibre</string>
+    <string name="tts_te_dialog_speak">VozLibre necesita la exploración táctil. Toca el botón Activar en el aviso de VozLibre.</string>
+    <string name="rate_ultra">ultra rápida</string>
+
+    <!-- Motores de voz: reintentos y falta de motores -->
+    <string name="tts_engine_fallback">No se pudo usar el motor de voz elegido. Probando con otro motor disponible.</string>
+    <string name="tts_no_engines">No encontré ningún motor de voz en este teléfono. Sin motor de voz no puedo hablar. Abre VozLibre e instala uno gratuito, como RHVoice o eSpeak.</string>
+    <string name="engines_none">No se encontraron motores de voz. Instala RHVoice o eSpeak NG (gratis).</string>
+    <string name="no_engines_title">Falta un motor de voz</string>
+    <string name="no_engines_msg">VozLibre no encontró ningún motor de texto a voz instalado en este teléfono: sin uno, no puede hablar.\n\nPuedes instalar uno gratuito:\n\n• RHVoice: voces naturales en español.\n• eSpeak NG: voz robótica pero muy rápida y ligera.\n\nTras instalarlo, abre VozLibre y elige el motor en «Motor de voz».</string>
+    <string name="btn_find_rhvoice">Buscar RHVoice</string>
+    <string name="btn_find_espeak">Buscar eSpeak NG</string>
+    <string name="notif_no_tts_title">VozLibre necesita un motor de voz</string>
+    <string name="notif_no_tts_text">Toca para abrir VozLibre e instalar RHVoice o eSpeak (gratis)</string>
 
     <!-- Tipos de elemento (hablados) -->
     <string name="type_button">botón</string>
