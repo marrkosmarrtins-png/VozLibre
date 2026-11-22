@@ -1,7 +1,7 @@
 {
-  "versionCode": 7,
-  "versionName": "1.0.6",
-  "apkUrl": "https://github.com/marrkosmarrtins-png/VozLibre/releases/download/v1.0.6/VozLibre-1.0.6.apk",
-  "sizeBytes": 283960,
-  "notes": "· SONIDOS ARREGLADOS: van ahora por el MISMO flujo de audio que la voz (si se oye la voz, se oye el clic, el diálogo y cada acción); sonidos nuevos más claros y cargan al instante.\n· EL FOCO VA DONDE TOCAS EN TODA LA PANTALLA: teclado (tocar una tecla la anuncia), barra de estado (dice la hora y la batería), barra de navegación y zonas vacías: nunca silencio.\n· DESLIZADORES como TalkBack: con un deslizador enfocado, desliza arriba o abajo y se ajusta solo, anunciando su valor («70 por ciento»). Al barrer, cada deslizador también dice su valor.\n· VOCES: botón «Cargar todas las voces», selector de IDIOMA del motor y selector de VOCES disponibles para ese idioma (se recuerdan en cada arranque).\n· VELOCIDAD SÚPER RÁPIDA: respuesta inmediata al deslizar (sin esperas), menos pausa entre páginas (250 ms).\n· Mantienen todo lo anterior: lectura continua con arrastre de scroll, barrido bidireccional que desplaza las listas, seguimiento del foco y de los menús emergentes, todos los motores TTS y actualizaciones automáticas."
+  "versionCode": 8,
+  "versionName": "1.0.7",
+  "apkUrl": "https://github.com/marrkosmarrtins-png/VozLibre/releases/download/v1.0.7/VozLibre-1.0.7.apk",
+  "sizeBytes": 287016,
+  "notes": "· AUTOENFOQUE DE PANTALLA NUEVA: al abrir una app, un diálogo o un menú, el foco salta al PRIMER elemento de la pantalla nueva y lo anuncia (primero el nombre de la pantalla, después el elemento). Ya no hay que recorrer la pantalla anterior para darse cuenta de que cambió: abre WhatsApp y el foco va a un botón de WhatsApp.\n· DOBLE TOQUE EN CUALQUIER PARTE: el clic va al elemento ENFOCADO aunque el doble toque caiga arriba, abajo o a la izquierda. Si el campo está enfocado, el clic lo activa desde cualquier punto de la pantalla.\n· TOCAR LA PANTALLA DETIENE la lectura continua al instante.\n· SCROLL CON DOS DEDOS: desliza con dos dedos hacia arriba o abajo para desplazar la pantalla, como en todos los lectores, sin perder el elemento enfocado.\n· El barrido salta solo a la pantalla nueva al cambiar de app y anuncia su primer elemento.\n· Mantienen todo lo anterior: sonidos por acción, voces e idiomas, deslizadores ajustables, lectura continua que arrastra el scroll, exploración táctil propia en toda la pantalla y actualizaciones automáticas."
 }

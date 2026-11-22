@@ -18,6 +18,8 @@ contenido nuevo, página tras página.
 | ▶▶ **Modo barrido** | Salta de elemento en elemento con marco verde y **desplaza las listas solas**: al llegar al último elemento visible, el contenedor avanza y siguen los elementos nuevos. |
 | ✋ **Exploración táctil propia** | Sigue tu dedo por TODA la pantalla (hit-test propio sobre todas las ventanas); doble toque activa y doble toque mantenido hace la pulsación larga. | 
 | 🎯 **Sigue el foco** | Anuncia los diálogos, los menús emergentes de la pulsación larga y los elementos que la app enfoca. |
+| ⚡ **Autoenfoque de pantalla nueva** | Al abrir una app, un diálogo o un menú, el foco salta AL PRIMER ELEMENTO de la pantalla nueva y lo anuncia: nunca se queda en los botones de la pantalla anterior (abres WhatsApp y el foco va a un botón de WhatsApp). |
+| 👆 **Doble toque universal** | El doble toque EN CUALQUIER PARTE de la pantalla activa el elemento enfocado: si el campo está abajo y haces el doble toque arriba, se activa el campo. Tocar la pantalla detiene la lectura continua al instante. |
 | 🎚 **Ajustes de voz** | Velocidad (0.5x–5x, por defecto 2.5x), tono y pausa de scroll configurables y guardadas. |
 | 🌐 **Idioma y voces** | «Cargar todas las voces» del motor, selector de **idioma** y selector de **voces disponibles para ese idioma**; la elección se recuerda y se aplica en cada arranque. |
 | 🎚️ **Deslizadores ajustables** | Con un deslizador enfocado, deslizar arriba/abajo lo ajusta (como TalkBack) y anuncia su valor («70 por ciento»). |
@@ -26,7 +28,7 @@ contenido nuevo, página tras página.
 | 📳 **Vibración** | Vibración al anunciar elementos con fuerza ajustable (1–100 %). |
 | 🗣 **Motor de voz a elección** | Lista TODOS los motores TTS instalados (sistema y añadidos, p. ej. RHVoice o eSpeak NG) y reintenta con otro si el elegido falla. |
 | 🔔 **Notificación de control** | Botones «Leer pantalla», «Barrido», «Silenciar» y «Desactivar lector» disponibles desde cualquier app. |
-| 🖐 **Gestos** | Arriba = leer todo · Abajo = detener (o ajustar el deslizador enfocado) · Derecha = siguiente · Izquierda = anterior. |
+| 🖐 **Gestos** | Arriba = leer todo (al tocar se detiene) · Abajo = detener (o ajustar el deslizador enfocado) · Derecha = siguiente · Izquierda = anterior · **Dos dedos arriba/abajo = desplazar la pantalla** (como TalkBack). |
 | ⬆️ **Actualizaciones automáticas** | Notificación y diálogo con versión, tamaño y novedades; descarga a una carpeta propia e instalación con permiso del sistema. |
 | ℹ️ **Acerca de** | Diálogo con la descripción completa y botón «Código fuente» que abre el repositorio. |
 

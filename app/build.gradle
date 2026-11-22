@@ -18,8 +18,8 @@ android {
         applicationId "com.vozlibre.reader"
         minSdk 24          // Android 7.0
         targetSdk 34       // Android 14
-        versionCode 7      // línea 1.0; code 7 para actualizar sobre la 6 (foco en toda la pantalla, voces e idiomas, deslizadores, sonidos arreglados, velocidad)
-        versionName "1.0.6"
+        versionCode 8      // línea 1.0; code 8 para actualizar sobre la 7 (autoenfoque de pantalla nueva, doble toque global, scroll a dos dedos, tocar detiene la lectura, barrido salta a la pantalla nueva)
+        versionName "1.0.7"
     }
 
     signingConfigs {

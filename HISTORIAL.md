@@ -7,7 +7,67 @@ resolvieron.
 
 ---
 
-## 1.0.6 — versionCode 7 (actual)
+## 1.0.7 — versionCode 8 (actual)
+
+### Problemas que se conocían y se resolvieron en esta versión
+
+1. **Al entrar en una pantalla nueva, el foco se quedaba en la pantalla
+   anterior.** El usuario abría WhatsApp y el lector seguía enfocado en los
+   botones de la pantalla de inicio: había que barrer TODA la pantalla
+   anterior para descubrir que la pantalla ya era otra. Injusto y lento.
+   **Solución (arquitectura TalkBack, transición de ventanas):** al llegar
+   `TYPE_WINDOW_STATE_CHANGED`, VozLibre espera un instante (220 ms) a que
+   la app termine de abrirse, resuelve la ventana de APLICACIÓN activa
+   (`getWindows()`: gana la enfocada; se excluyen el teclado, las capas de
+   accesibilidad y las ventanas del PROPIO VozLibre) y **AUTOENFOCA el
+   PRIMER ELEMENTO de la pantalla nueva**, anunciándolo con su sonido de
+   ventana (primero el nombre de la pantalla —«WhatsApp»— y después el
+   elemento). En modo barrido, recoge la lista de la ventana NUEVA y salta
+   a su primer elemento. Si el dedo del usuario está en la pantalla, el
+   autoenfoque espera: no pelea con la exploración táctil. La misma
+   ventana ya activa (cambios de título de paneles web, teclado) NO roba
+   el foco otra vez.
+
+2. **El clic debía responder desde cualquier parte de la pantalla.** Si un
+   campo de edición está abajo y el usuario hace el clic arriba o a la
+   izquierda, el clic iba al elemento que hubiera bajo el dedo (o a nada).
+   **Solución (modelo de foco de TalkBack):** el lector recuerda SIEMPRE
+   cuál es el elemento enfocado (toque, barrido, foco de la app o
+   autoenfoque de pantalla nueva) y **el doble toque EN CUALQUIER PARTE de
+   la pantalla activa ESE elemento**, sin importar el lado donde caiga el
+   doble toque. Respaldo en cascada: elemento bajo el dedo → toque real en
+   el punto. La pulsación larga (doble toque mantenido) también actúa
+   sobre el centro del elemento enfocado si el dedo cayó en un hueco.
+
+3. **La lectura continua no se detenía al tocar la pantalla.** **Solución
+   (gesto de TalkBack):** con la lectura continua activa (deslizar hacia
+   arriba), un simple toque pone silencio AL INSTANTE y deja explorar.
+
+4. **Faltaba el desplazamiento con DOS DEDOS, que tiene todo lector de
+   pantalla.** **Solución (gestos de TalkBack):** deslizar con DOS DEDOS
+   hacia arriba desplaza la pantalla hacia abajo (aparece el contenido de
+   abajo) y hacia abajo retrocede, SIN cambiar el elemento enfocado. Funciona
+   por dos caminos: los gestos `GESTURE_2_FINGER_SWIPE_*` del sistema
+   (Android 10+) y una detección propia del arrastre de dos dedos en
+   `onMotionEvent` (Android 7+), con desduplicación para no desplazar dos
+   veces. Va al contenedor desplazable del elemento enfocado; si no hay, al
+   principal de la ventana; si no, a un arrastre sintético con dirección.
+
+5. **El barrido no saltaba a la app nueva.** Al cambiar de aplicación
+   mientras se barre, el lector se quedaba callado con la lista vieja.
+   **Solución:** si la app ya no coincide, el barrido se reinicia solo sobre
+   la ventana nueva y anuncia su primer (o último) elemento.
+
+### Funciona sin nada más
+
+- Sigue sin necesitar TalkBack ni ningún otro lector de pantalla ni
+  servicios de Google: pide y sostiene la exploración táctil por sí mismo.
+- Si no hay ningún motor de voz, guía para instalar uno gratuito
+  (RHVoice, eSpeak NG).
+
+---
+
+## 1.0.6 — versionCode 7
 
 ### Problemas que se conocían y se resolvieron en esta versión
 

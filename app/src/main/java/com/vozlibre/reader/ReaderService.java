@@ -72,6 +72,12 @@ import java.util.Set;
  *     aplicación se detiene limpiamente (no se queda «pegado» en Chrome).
  * 12. Notificación de control con botones, incluido «Desactivar lector».
  * 13. Busca actualizaciones cada 12 h y avisa con notificación propia.
+ * 14. AUTOENFOQUE de pantalla nueva (arquitectura TalkBack): al abrirse una
+ *     app, un diálogo o un menú, el foco salta AL PRIMER ELEMENTO de la
+ *     pantalla nueva: nunca se queda en los botones de la pantalla
+ *     anterior. Doble toque en CUALQUIER PARTE activa el elemento
+ *     enfocado. SCROLL con DOS DEDOS arriba y abajo. Tocar la pantalla
+ *     DETIENE la lectura continua.
  */
 public class ReaderService extends AccessibilityService {
 
@@ -154,6 +160,31 @@ public class ReaderService extends AccessibilityService {
     private long lastAnnouncedKeyMs = 0;
     private AccessibilityNodeInfo touchedNode = null;
 
+    // ------- autoenfoque de pantalla nueva (arquitectura TalkBack) -------
+    private static final long WINDOW_FOCUS_DELAY_MS = 220L;
+    private static final float TWO_FINGER_MIN_PX = 60f;
+    /** Id de la última ventana a la que ya llevamos el foco. */
+    private int lastActiveWindowId = -1;
+    /** Título capturado del último evento de ventana (nombre de pantalla). */
+    private String pendingWindowLabel = null;
+    /**
+     * Elemento enfocado AHORA: el doble toque en cualquier parte de la
+     * pantalla lo activa (así un campo abajo enfocado se activa aunque el
+     * doble toque caiga arriba o a la izquierda).
+     */
+    private AccessibilityNodeInfo focusedNode = null;
+    /** Hay un dedo del usuario en la pantalla ahora mismo. */
+    private boolean touchInProgress = false;
+    /** El detector del sistema ya reconoció un gesto de dos dedos. */
+    private boolean frameworkTwoFingerSeen = false;
+    private final Runnable windowFocusApply = this::applyWindowFocus;
+
+    // ------- scroll con DOS DEDOS (como TalkBack) -------
+    private boolean twoFingerActive = false;
+    private float twoFingerStartY = 0;
+    private float twoFingerLastY = 0;
+    private long lastTwoFingerScrollMs = 0;
+
     /** Doble toque y mantener = pulsación larga (el dedo sigue quieto). */
     private final Runnable longPressCheck = new Runnable() {
         @Override
@@ -161,9 +192,14 @@ public class ReaderService extends AccessibilityService {
             if (instance == null || longPressSent || movedFar) return;
             long now = SystemClock.uptimeMillis();
             if (now - downMs < LONG_PRESS_MS) return;
-            if (!secondTapDown || touchedNode == null) return;
+            if (!secondTapDown) return;
+            // Pulsación larga sobre el elemento del doble toque: el que está
+            // bajo el dedo o, si el dedo cayó en un hueco, el ENFOCADO.
+            AccessibilityNodeInfo target = touchedNode != null
+                    ? touchedNode : focusedNode;
+            if (target == null) return;
             longPressSent = true;
-            performLongPress(touchedNode, downX, downY);
+            performLongPress(target, downX, downY);
         }
     };
 
@@ -704,63 +740,200 @@ public class ReaderService extends AccessibilityService {
                 if (mode == MODE_IDLE) navSound(Earcons.CLICK);
                 break;
 
-            case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED: {
-                if (mode == MODE_IDLE) {
-                    // Nueva pantalla, DIÁLOGO o MENÚ EMERGENTE (pulsación
-                    // larga): sonido propio SIEMPRE + título o primer elemento.
-                    overlayHideSafe();
-                    playEarcon(Earcons.WINDOW);
-                    String title = firstTextOf(event);
-                    if (title == null || title.trim().isEmpty()) {
-                        AccessibilityNodeInfo r = activeRootForCollection();
-                        if (r != null) {
-                            AccessibilityNodeInfo first = firstReadableNode(r);
-                            if (first != null) title = readableText(first);
-                        }
-                    }
-                    if (title != null && !title.trim().isEmpty()
-                            && !title.equalsIgnoreCase(lastSpoken)) {
-                        lastSpoken = title;
-                        announce(getString(R.string.tts_window) + ": " + title);
-                    }
-                }
-                if (mode == MODE_SWEEP) {
-                    // Se abrió un menú emergente o pantalla nueva mientras se
-                    // barre: recoger SUS elementos para seguir navegando en
-                    // ellos (antes el barrido se quedaba con la lista vieja).
-                    AccessibilityNodeInfo root = activeRootForCollection();
-                    if (root != null) {
-                        String prevText = index >= 0 && index < nodes.size()
-                                ? readableText(nodes.get(index)) : null;
-                        collectNodes(root, false);
-                        int found = -1;
-                        if (prevText != null) {
-                            for (int i = 0; i < nodes.size(); i++) {
-                                String t = readableText(nodes.get(i));
-                                if (t != null && t.equals(prevText)) {
-                                    found = i;
-                                    break;
-                                }
-                            }
-                        }
-                        index = found >= 0 ? found : -1;
-                    }
-                }
-                if (mode == MODE_READING && readingPackage != null) {
-                    // Salimos de la app que estábamos leyendo: detener aquí.
-                    AccessibilityNodeInfo root = getRootInActiveWindow();
-                    String rootPkg = root != null
-                            ? String.valueOf(root.getPackageName())
-                            : String.valueOf(event.getPackageName());
-                    if (!readingPackage.equals(rootPkg)) {
-                        stopAllInternal();
-                    }
-                }
+            case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
+                handleWindowStateChanged(event);
                 break;
-            }
             default:
                 break;
         }
+    }
+
+    // ------------------------------------------------- autoenfoque de pantalla nueva
+
+    /**
+     * CAMBIO DE PANTALLA (arquitectura TalkBack): al abrirse una app, un
+     * diálogo o un menú nuevo, el foco salta AL PRIMER ELEMENTO de la
+     * pantalla nueva. Antes el lector se quedaba enfocado en los botones de
+     * la pantalla anterior: había que barrer toda la pantalla vieja para
+     * descubrir que la pantalla ya era otra. Aquí solo se captura el título
+     * y se programa el reenfoque; el trabajo lo hace applyWindowFocus()
+     * tras un retardo corto (deja que la app termine de abrirse y colapsa
+     * la ráfaga de eventos de una sola apertura).
+     */
+    private void handleWindowStateChanged(AccessibilityEvent event) {
+        // Título de la pantalla nueva («WhatsApp», el nombre de un diálogo…).
+        // Se descarta si el evento es del TECLADO o parece un nombre de
+        // paquete: no son títulos que valga la pena anunciar.
+        pendingWindowLabel = null;
+        String evLabel = firstTextOf(event);
+        if (evLabel != null && !evLabel.trim().isEmpty()
+                && !isWindowIdInputMethod(event.getWindowId())
+                && !evLabel.matches("[a-z0-9_.]+")) {
+            pendingWindowLabel = evLabel;
+        }
+        // Lectura continua: parar si cambiamos de aplicación.
+        if (mode == MODE_READING && readingPackage != null) {
+            AccessibilityNodeInfo root = getRootInActiveWindow();
+            String rootPkg = root != null
+                    ? String.valueOf(root.getPackageName())
+                    : String.valueOf(event.getPackageName());
+            if (!readingPackage.equals(rootPkg)) {
+                stopAllInternal();
+            }
+        }
+        handler.removeCallbacks(windowFocusApply);
+        handler.postDelayed(windowFocusApply, WINDOW_FOCUS_DELAY_MS);
+    }
+
+    /** ¿La ventana con ese id es el teclado en pantalla? */
+    private boolean isWindowIdInputMethod(int windowId) {
+        if (windowId <= 0) return false;
+        try {
+            List<AccessibilityWindowInfo> wins = getWindows();
+            if (wins == null) return false;
+            for (AccessibilityWindowInfo w : wins) {
+                if (w.getId() == windowId) {
+                    return w.getType()
+                            == AccessibilityWindowInfo.TYPE_INPUT_METHOD;
+                }
+            }
+        } catch (Exception ignored) { }
+        return false;
+    }
+
+    /**
+     * Ventana de APLICACIÓN en uso: la enfocada (diálogos y menús emergentes
+     * ganan) o la de capa más alta. Se excluyen el TECLADO, las capas de
+     * accesibilidad y las ventanas del PROPIO VozLibre (su diálogo y su
+     * marco verde): nunca nos robamos el foco a nosotros mismos.
+     */
+    private AccessibilityWindowInfo topAppWindow() {
+        try {
+            List<AccessibilityWindowInfo> wins = getWindows();
+            if (wins == null) return null;
+            AccessibilityWindowInfo focusedWin = null;
+            AccessibilityWindowInfo topWin = null;
+            int topLayer = Integer.MIN_VALUE;
+            String me = getPackageName();
+            for (AccessibilityWindowInfo w : wins) {
+                try {
+                    int t = w.getType();
+                    if (t == AccessibilityWindowInfo.TYPE_INPUT_METHOD
+                            || t == AccessibilityWindowInfo
+                                    .TYPE_ACCESSIBILITY_OVERLAY) {
+                        continue;
+                    }
+                    AccessibilityNodeInfo r = w.getRoot();
+                    if (r != null
+                            && me.equals(String.valueOf(r.getPackageName()))) {
+                        continue;
+                    }
+                    if (w.isFocused() && focusedWin == null) focusedWin = w;
+                    if (w.getLayer() > topLayer) {
+                        topLayer = w.getLayer();
+                        topWin = w;
+                    }
+                } catch (Exception ignored) { }
+            }
+            return focusedWin != null ? focusedWin : topWin;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * AUTOENFOQUE: llevar el foco al PRIMER ELEMENTO de la pantalla que se
+     * acaba de abrir y anunciarlo (así al abrir WhatsApp el foco va a un
+     * botón de WhatsApp, no queda en la pantalla anterior). En barrido, se
+     * recoge la ventana nueva y se salta a su primer elemento. Si el dedo
+     * del usuario está en la pantalla, esperar: no pelear con la
+     * exploración táctil.
+     */
+    private void applyWindowFocus() {
+        if (instance == null) return;
+        if (touchInProgress || twoFingerActive) {
+            // El usuario está tocando: reintentar enseguida, sin robarle
+            // el foco mientras su dedo explora.
+            handler.postDelayed(windowFocusApply, 300);
+            return;
+        }
+        AccessibilityWindowInfo win = topAppWindow();
+        if (win == null) return;
+        int wid = win.getId();
+        AccessibilityNodeInfo root = win.getRoot();
+        if (root == null) return;
+        String label = pendingWindowLabel;
+        pendingWindowLabel = null;
+        if (wid > 0 && wid == lastActiveWindowId) {
+            // MISMA ventana ya activa: solo refrescar la lista del barrido
+            // (manteniendo posición si el elemento sigue ahí) y avisar el
+            // título si cambió (panel o página nueva dentro de la app).
+            if (mode == MODE_SWEEP) {
+                String prevText = index >= 0 && index < nodes.size()
+                        ? readableText(nodes.get(index)) : null;
+                collectNodes(root, false);
+                if (!nodes.isEmpty()) {
+                    int found = -1;
+                    if (prevText != null) {
+                        for (int i = 0; i < nodes.size(); i++) {
+                            String t = readableText(nodes.get(i));
+                            if (t != null && t.equals(prevText)) {
+                                found = i;
+                                break;
+                            }
+                        }
+                    }
+                    index = found >= 0 ? found : -1;
+                }
+            }
+            announceWindowTitle(label);
+            return;
+        }
+        // TRANSICIÓN REAL: otra pantalla se abrió.
+        lastActiveWindowId = wid;
+        overlayHideSafe(); // el marco verde ya no corresponde a esta pantalla
+        if (mode == MODE_READING) stopAllInternal();
+        AccessibilityNodeInfo first = firstReadableNode(root);
+        if (first == null) return;
+        if (mode == MODE_SWEEP) {
+            // Barrido: navegar la pantalla NUEVA desde su primer elemento.
+            readingPackage = String.valueOf(root.getPackageName());
+            collectNodes(root, false);
+            if (nodes.isEmpty()) return;
+            index = 0;
+            navSound(Earcons.NEXT);
+            speakSweepNode();
+            return;
+        }
+        // Reposo: enfocar y anunciar el primer elemento de la pantalla nueva.
+        focusedNode = first;
+        suppressFocusEchoUntil = SystemClock.uptimeMillis() + 400;
+        try {
+            first.performAction(AccessibilityNodeInfo
+                    .ACTION_ACCESSIBILITY_FOCUS);
+        } catch (Exception ignored) { }
+        String elemText = readableText(first);
+        boolean labelCoversIt = label != null && elemText != null
+                && normalize(label).contains(normalize(elemText));
+        if (label != null && !label.trim().isEmpty() && !labelCoversIt
+                && !label.equalsIgnoreCase(lastSpoken)) {
+            // Primero el nombre de la pantalla («WhatsApp»), después el
+            // elemento enfocado.
+            lastSpoken = label;
+            speak(label, TextToSpeech.QUEUE_FLUSH, "winname");
+            announceNode(first, "winel", false, Earcons.WINDOW);
+        } else {
+            announceNode(first, "winel", true, Earcons.WINDOW);
+        }
+    }
+
+    /** Anuncia el título de una ventana si es nuevo (sin repetir). */
+    private void announceWindowTitle(String label) {
+        if (label == null || label.trim().isEmpty()) return;
+        if (label.equalsIgnoreCase(lastSpoken)) return;
+        lastSpoken = label;
+        playEarcon(Earcons.WINDOW);
+        announce(getString(R.string.tts_window) + ": " + label);
     }
 
     /**
@@ -769,9 +942,10 @@ public class ReaderService extends AccessibilityService {
      */
     private void announceEventLikeRealReader(AccessibilityEvent event,
                                              String utteranceId, int earcon) {
+        AccessibilityNodeInfo src = event.getSource();
+        if (src != null) focusedNode = src;
         String text = firstTextOf(event);
         if (text == null || text.trim().isEmpty()) {
-            AccessibilityNodeInfo src = event.getSource();
             if (src != null) text = readableText(src);
         }
         if (text == null) text = "";
@@ -885,7 +1059,13 @@ public class ReaderService extends AccessibilityService {
         rawTouchSeenMs = SystemClock.uptimeMillis();
         switch (action) {
             case MotionEvent.ACTION_DOWN: {
+                // TOCAR LA PANTALLA DETIENE LA LECTURA CONTINUA (TalkBack):
+                // un toque pone silencio al instante para explorar tranquilo.
+                if (mode == MODE_READING) stopAllInternal();
                 handler.removeCallbacks(longPressCheck);
+                twoFingerActive = false;
+                frameworkTwoFingerSeen = false;
+                touchInProgress = true;
                 downX = event.getX();
                 downY = event.getY();
                 downMs = rawTouchSeenMs;
@@ -907,7 +1087,25 @@ public class ReaderService extends AccessibilityService {
                 break;
             }
 
+            case MotionEvent.ACTION_POINTER_DOWN: {
+                // Segundo dedo: empieza un gesto de DOS DEDOS (scroll).
+                if (event.getPointerCount() >= 2) {
+                    twoFingerActive = true;
+                    twoFingerStartY = avgPointerY(event);
+                    twoFingerLastY = twoFingerStartY;
+                    movedFar = true;
+                    lastTapUpMs = 0;
+                    handler.removeCallbacks(longPressCheck);
+                }
+                break;
+            }
+
             case MotionEvent.ACTION_MOVE: {
+                if (twoFingerActive) {
+                    // Arrastre con DOS DEDOS: solo medir la distancia vertical.
+                    twoFingerLastY = avgPointerY(event);
+                    break;
+                }
                 float dx = event.getX() - downX;
                 float dy = event.getY() - downY;
                 if (dx * dx + dy * dy > (float) TAP_SLOP * TAP_SLOP) {
@@ -933,6 +1131,19 @@ public class ReaderService extends AccessibilityService {
 
             case MotionEvent.ACTION_UP: {
                 handler.removeCallbacks(longPressCheck);
+                touchInProgress = false;
+                if (twoFingerActive) {
+                    // Fin del gesto de DOS DEDOS: desplazar la pantalla en la
+                    // dirección arrastrada (arriba = avanzar, abajo = retroceder).
+                    twoFingerActive = false;
+                    lastTapUpMs = 0;
+                    float dyTwo = twoFingerLastY - twoFingerStartY;
+                    if (Math.abs(dyTwo) >= TWO_FINGER_MIN_PX
+                            && !frameworkTwoFingerSeen) {
+                        performTwoFingerScroll(dyTwo < 0);
+                    }
+                    break;
+                }
                 long upMs = SystemClock.uptimeMillis();
                 float dx = event.getX() - downX;
                 float dy = event.getY() - downY;
@@ -944,21 +1155,11 @@ public class ReaderService extends AccessibilityService {
                             && dist2(event.getX(), event.getY(),
                                     lastTapX, lastTapY) <= (float) TAP_SLOP * TAP_SLOP;
                     if (doubleTap) {
-                        // DOBLE TOQUE = activar el elemento anunciado.
+                        // DOBLE TOQUE EN CUALQUIER PARTE = activar el elemento
+                        // ENFOCADO, caiga el doble toque donde caiga.
                         lastTapUpMs = 0;
-                        AccessibilityNodeInfo target = touchedNode != null
-                                ? touchedNode : findNodeAtPoint(
-                                        (int) event.getX(), (int) event.getY());
-                        if (target != null) {
-                            activateNode(target, event.getX(), event.getY());
-                        } else {
-                            // Sin nodo (barra de navegación, zona vacía):
-                            // toque real en el punto, como hace TalkBack
-                            // para la barra del sistema.
-                            boolean ok = dispatchTap(
-                                    event.getX(), event.getY(), 40);
-                            navSound(ok ? Earcons.CLICK : Earcons.ERROR);
-                        }
+                        activateFocusedFromAnywhere(
+                                event.getX(), event.getY());
                     } else {
                         // Toque simple: el nodo ya se anunció al tocar.
                         // Si NO había nodo, nunca silencio: barra de estado
@@ -978,12 +1179,22 @@ public class ReaderService extends AccessibilityService {
 
             case MotionEvent.ACTION_CANCEL:
                 handler.removeCallbacks(longPressCheck);
+                twoFingerActive = false;
+                touchInProgress = false;
                 lastTapUpMs = 0;
                 break;
 
             default:
                 break;
         }
+    }
+
+    /** Media de las Y de todos los dedos en contacto. */
+    private static float avgPointerY(MotionEvent e) {
+        float sum = 0;
+        int n = e.getPointerCount();
+        for (int i = 0; i < n; i++) sum += e.getY(i);
+        return n > 0 ? sum / n : 0;
     }
 
     private static float dist2(float x1, float y1, float x2, float y2) {
@@ -1045,6 +1256,7 @@ public class ReaderService extends AccessibilityService {
     /** Anuncia un nodo con su tipo y estado, marco verde, sonido y vibración. */
     private void announceNode(AccessibilityNodeInfo n, String utteranceId,
                               boolean interrupt, int earcon) {
+        focusedNode = n; // el doble toque en cualquier parte activa ESTE elemento
         String text = readableText(n);
         String type = typeForClass(n.getClassName());
         if (text == null || text.trim().isEmpty()) {
@@ -1092,6 +1304,50 @@ public class ReaderService extends AccessibilityService {
         }
     }
 
+    /**
+     * DOBLE TOQUE EN CUALQUIER PARTE (TalkBack): el clic va al elemento
+     * ENFOCADO aunque el doble toque caiga en otro lado de la pantalla.
+     * Si hay un campo de edición abajo enfocado y el usuario hace el doble
+     * toque arriba o a la izquierda, se activa EL CAMPO. Sin foco válido
+     * (se quedó en una pantalla anterior), respaldo: el elemento bajo el
+     * dedo; si tampoco hay, un toque real en el punto.
+     */
+    private void activateFocusedFromAnywhere(float x, float y) {
+        AccessibilityNodeInfo target = focusedNode;
+        if (target != null) {
+            Rect r = new Rect();
+            Point s = screenSize();
+            try {
+                target.getBoundsInScreen(r);
+            } catch (Exception ignored) {
+                r.setEmpty();
+            }
+            if (r.isEmpty() || !r.intersects(0, 0, s.x, s.y)) {
+                target = null; // el foco quedó en una pantalla anterior
+            }
+        }
+        if (target == null) {
+            target = touchedNode != null
+                    ? touchedNode
+                    : findNodeAtPoint((int) x, (int) y);
+        }
+        if (target != null) {
+            Rect r2 = new Rect();
+            try {
+                target.getBoundsInScreen(r2);
+            } catch (Exception ignored) {
+                r2.setEmpty();
+            }
+            float ax = r2.isEmpty() ? x : r2.exactCenterX();
+            float ay = r2.isEmpty() ? y : r2.exactCenterY();
+            activateNode(target, ax, ay);
+        } else {
+            // Zona sin elementos: toque real en el punto (barra del sistema).
+            boolean ok = dispatchTap(x, y, 40);
+            navSound(ok ? Earcons.CLICK : Earcons.ERROR);
+        }
+    }
+
     /** Doble toque y mantener: pulsación larga sobre el elemento. */
     private void performLongPress(AccessibilityNodeInfo node, float x, float y) {
         navSound(Earcons.CLICK);
@@ -1101,9 +1357,19 @@ public class ReaderService extends AccessibilityService {
                     AccessibilityNodeInfo.ACTION_LONG_CLICK);
         } catch (Exception ignored) { }
         if (!done) {
+            // Respaldo: arrastre nulo sobre el CENTRO del elemento (no sobre
+            // el punto del dedo, que puede estar en otro lado de la pantalla).
+            Rect r = new Rect();
+            try {
+                node.getBoundsInScreen(r);
+            } catch (Exception ignored) {
+                r.setEmpty();
+            }
+            float lx = r.isEmpty() ? x : r.exactCenterX();
+            float ly = r.isEmpty() ? y : r.exactCenterY();
             try {
                 Path path = new Path();
-                path.moveTo(x, y);
+                path.moveTo(lx, ly);
                 GestureDescription.Builder builder = new GestureDescription.Builder();
                 builder.addStroke(new GestureDescription.StrokeDescription(
                         path, 0, 600));
@@ -1359,6 +1625,17 @@ public class ReaderService extends AccessibilityService {
                 stopAllInternal();
                 announceWith(Earcons.STOP, R.string.tts_stopped);
                 break;
+            case GESTURE_2_FINGER_SWIPE_UP:
+                // DOS DEDOS hacia arriba: la pantalla avanza (aparece el
+                // contenido de abajo), como el scroll de TalkBack.
+                frameworkTwoFingerSeen = true;
+                performTwoFingerScroll(true);
+                break;
+            case GESTURE_2_FINGER_SWIPE_DOWN:
+                // DOS DEDOS hacia abajo: la pantalla retrocede.
+                frameworkTwoFingerSeen = true;
+                performTwoFingerScroll(false);
+                break;
             case GESTURE_SWIPE_RIGHT:
                 // Siguiente elemento (entra en barrido si estaba en reposo).
                 if (mode != MODE_SWEEP) startSweep(false); else sweepNext();
@@ -1462,7 +1739,7 @@ public class ReaderService extends AccessibilityService {
             }
         }
         if (!scrolled) {
-            scrolled = dispatchScrollGesture();
+            scrolled = dispatchScrollGesture(true);
         }
         if (scrolled) {
             navSound(Earcons.SCROLL);
@@ -1512,17 +1789,61 @@ public class ReaderService extends AccessibilityService {
         return firstAny;
     }
 
-    private boolean dispatchScrollGesture() {
+    private boolean dispatchScrollGesture(boolean forward) {
         try {
             Point size = screenSize();
             Path path = new Path();
-            path.moveTo(size.x / 2f, size.y * 0.80f);
-            path.lineTo(size.x / 2f, size.y * 0.30f);
+            if (forward) {
+                path.moveTo(size.x / 2f, size.y * 0.80f);
+                path.lineTo(size.x / 2f, size.y * 0.30f);
+            } else {
+                path.moveTo(size.x / 2f, size.y * 0.30f);
+                path.lineTo(size.x / 2f, size.y * 0.80f);
+            }
             GestureDescription.Builder builder = new GestureDescription.Builder();
             builder.addStroke(new GestureDescription.StrokeDescription(path, 0, 250));
             return dispatchGesture(builder.build(), null, null);
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /**
+     * SCROLL CON DOS DEDOS (como TalkBack): desplaza la pantalla hacia
+     * arriba o abajo SIN cambiar el elemento enfocado. Deslizar hacia
+     * arriba avanza (aparece el contenido de abajo); hacia abajo retrocede.
+     * Va al contenedor desplazable del elemento enfocado; si no hay, al
+     * principal de la ventana; si no, a un arrastre sintético.
+     */
+    private void performTwoFingerScroll(boolean forward) {
+        if (instance == null) return;
+        long now = SystemClock.uptimeMillis();
+        if (now - lastTwoFingerScrollMs < 600) {
+            return; // ya desplazó el detector de gestos del sistema
+        }
+        lastTwoFingerScrollMs = now;
+        AccessibilityNodeInfo sc = null;
+        AccessibilityNodeInfo cur = focusedNode != null
+                ? focusedNode : currentSweepNode();
+        if (cur != null) sc = findScrollableAncestor(cur);
+        if (sc == null) {
+            AccessibilityNodeInfo root = activeRootForCollection();
+            if (root != null) sc = findScrollable(root);
+        }
+        int action = forward
+                ? AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+                : AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD;
+        boolean scrolled = false;
+        if (sc != null) {
+            try {
+                scrolled = sc.performAction(action);
+            } catch (Exception ignored) { }
+        }
+        if (!scrolled) scrolled = dispatchScrollGesture(forward);
+        if (scrolled) {
+            navSound(Earcons.SCROLL);
+        } else {
+            playEarcon(Earcons.ERROR);
         }
     }
 
@@ -1536,6 +1857,38 @@ public class ReaderService extends AccessibilityService {
     /** Entra en barrido hacia adelante (uso desde la notificación). */
     public void startSweep() {
         startSweep(false);
+    }
+
+    /**
+     * El barrido detectó que la app cambió: recoger la ventana NUEVA y
+     * anunciar su primer (o último) elemento. Así el usuario no tiene que
+     * recorrer la pantalla anterior para darse cuenta de que ya está en la
+     * pantalla actual.
+     */
+    private void restartSweepOnNewWindow(boolean backwards) {
+        stopAllInternal();
+        AccessibilityNodeInfo root = activeRootForCollection();
+        if (root == null) {
+            announceWith(Earcons.ERROR, R.string.tts_no_element);
+            return;
+        }
+        mode = MODE_SWEEP;
+        readingPackage = String.valueOf(root.getPackageName());
+        collectNodes(root, false);
+        if (nodes.isEmpty()) {
+            mode = MODE_IDLE;
+            readingPackage = null;
+            announceWith(Earcons.ERROR, R.string.tts_no_element);
+            return;
+        }
+        if (backwards) {
+            index = nodes.size() - 1;
+            navSound(Earcons.PREV);
+        } else {
+            index = 0;
+            navSound(Earcons.NEXT);
+        }
+        speakSweepNode();
     }
 
     /**
@@ -1566,7 +1919,9 @@ public class ReaderService extends AccessibilityService {
     public void sweepNext() {
         if (mode != MODE_SWEEP) return;
         if (!activeWindowMatches()) {
-            stopAllInternal();
+            // Cambió la app mientras barríamos: saltar a la PANTALLA NUEVA
+            // (su primer elemento) en vez de quedarnos con la lista vieja.
+            restartSweepOnNewWindow(false);
             return;
         }
         if (index + 1 >= nodes.size()) {
@@ -1593,7 +1948,8 @@ public class ReaderService extends AccessibilityService {
     public void sweepPrevious() {
         if (mode != MODE_SWEEP) return;
         if (!activeWindowMatches()) {
-            stopAllInternal();
+            // Cambió la app mientras barríamos: ir a la pantalla nueva.
+            restartSweepOnNewWindow(true);
             return;
         }
         if (index <= 0) {
@@ -1697,6 +2053,7 @@ public class ReaderService extends AccessibilityService {
         if (mode != MODE_SWEEP) return;
         if (index < 0 || index >= nodes.size()) return;
         AccessibilityNodeInfo node = nodes.get(index);
+        focusedNode = node;
         String text = readableText(node);
         String type = typeForClass(node.getClassName());
         if (text == null || text.trim().isEmpty()) text = type;
