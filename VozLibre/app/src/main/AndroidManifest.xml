@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Visibilidad de paquetes (Android 11+): sin esto el sistema OCULTA
+         los motores de voz instalados por el usuario (RHVoice, eSpeak,
+         Acapela…) y solo se ven los del sistema. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
+    <!-- Necesario para mostrar la notificación de control en Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Vibración de respuesta al anunciar elementos -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Instalar la actualización descargada (con confirmación del usuario) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+
+        <!-- Pantalla principal: instrucciones y ajustes de voz -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Servicio de accesibilidad: el corazón del lector de pantalla -->
+        <service
+            android:name=".ReaderService"
+            android:exported="true"
+            android:label="@string/service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- Entrega al instalador del sistema el APK de la actualización ya
+             descargado. Sin este registro la actualización falla al instalar. -->
+        <provider
+            android:name=".ApkProvider"
+            android:authorities="com.vozlibre.reader.apk"
+            android:exported="true"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>
