@@ -1,0 +1,6 @@
+// VozLibre - Lector de pantalla libre (GPLv3) — reconstrucción estable (1.0.8)
+// Este es el proyecto ACTIVO: la carpeta app/ de la raíz conserva el código
+// de la 1.0.7 (rota) como referencia histórica y no se compila.
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}
