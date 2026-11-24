@@ -10,3 +10,6 @@ signing/
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Earcons generados en tiempo de compilación (no binarios en git)
+VozLibre/app/src/main/res/raw/*.wav
