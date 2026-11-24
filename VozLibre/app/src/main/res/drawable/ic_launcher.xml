@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icono de VozLibre: un altavoz con ondas de voz, verde sobre fondo
+     oscuro. Vector puro (sin PNG: un solo archivo para todas las
+     densidades). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Fondo redondeado -->
+    <path
+        android:fillColor="#0F766E"
+        android:pathData="M8,4 L40,4 A4,4 0 0 1 44,8 L44,40 A4,4 0 0 1 40,44 L8,44 A4,4 0 0 1 4,40 L4,8 A4,4 0 0 1 8,4 Z" />
+
+    <!-- Altavoz: triángulo + barra -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,20 L20,20 L27,13 L27,35 L20,28 L12,28 Z" />
+
+    <!-- Ondas de voz -->
+    <path
+        android:strokeColor="#F59E0B"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M32,18 Q35,24 32,30" />
+
+    <path
+        android:strokeColor="#F59E0B"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M36,14 Q41,24 36,34" />
+</vector>
