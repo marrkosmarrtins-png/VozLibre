@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pantalla principal de VozLibre: descripción, estado, ajustes de voz,
+  vibración y sonido, avisos hablados (1.0.8), exploración táctil y
+  botones. Todo en un ScrollView vertical con textos grandes y controles
+  estándar, para que el propio lector (y TalkBack) puedan recorrerla
+  fácilmente.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- ============ Encabezado y estado ============ -->
+        <TextView
+            android:id="@+id/txtAppTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="#0F766E" />
+
+        <TextView
+            android:id="@+id/txtAppDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/app_description"
+            android:textSize="15sp"
+            android:textColor="#334155" />
+
+        <TextView
+            android:id="@+id/txtVersionLine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/version_line"
+            android:textSize="13sp"
+            android:textColor="#64748B" />
+
+        <TextView
+            android:id="@+id/txtStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/status_inactive"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnActivate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="16sp"
+            android:text="@string/btn_activate" />
+
+        <TextView
+            android:id="@+id/txtTouch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/status_touch_off"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnTouchFix"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="15sp"
+            android:text="@string/btn_touch_fix" />
+
+        <!-- ============ Voz y lectura ============ -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/section_voice"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#0F766E" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/lbl_engine"
+            android:textSize="15sp" />
+
+        <Spinner
+            android:id="@+id/spnEngine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp" />
+
+        <TextView
+            android:id="@+id/txtEngines"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/engine_scanning"
+            android:textSize="13sp"
+            android:textColor="#64748B" />
+
+        <Button
+            android:id="@+id/btnRescanEngines"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="15sp"
+            android:text="@string/btn_rescan_engines" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/lbl_language"
+            android:textSize="15sp" />
+
+        <Spinner
+            android:id="@+id/spnLanguage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/lbl_voice"
+            android:textSize="15sp" />
+
+        <Spinner
+            android:id="@+id/spnVoice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp" />
+
+        <TextView
+            android:id="@+id/txtVoices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="13sp"
+            android:textColor="#64748B" />
+
+        <Button
+            android:id="@+id/btnLoadVoices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="15sp"
+            android:text="@string/btn_load_voices" />
+
+        <TextView
+            android:id="@+id/lblRate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/lbl_rate"
+            android:textSize="15sp" />
+
+        <SeekBar
+            android:id="@+id/seekRate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="44dp"
+            android:max="450" />
+
+        <TextView
+            android:id="@+id/lblPitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/lbl_pitch"
+            android:textSize="15sp" />
+
+        <SeekBar
+            android:id="@+id/seekPitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="44dp"
+            android:max="100" />
+
+        <TextView
+            android:id="@+id/lblDelay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/lbl_delay"
+            android:textSize="15sp" />
+
+        <SeekBar
+            android:id="@+id/seekDelay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="44dp"
+            android:max="17" />
+
+        <Button
+            android:id="@+id/btnDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="15sp"
+            android:text="@string/btn_demo" />
+
+        <!-- ============ Vibración y sonido ============ -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/section_feedback"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#0F766E" />
+
+        <Switch
+            android:id="@+id/swVibrate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:minHeight="48dp"
+            android:textSize="15sp"
+            android:text="@string/sw_vibrate" />
+
+        <TextView
+            android:id="@+id/lblVib"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/lbl_vib"
+            android:textSize="15sp" />
+
+        <SeekBar
+            android:id="@+id/seekVib"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="44dp"
+            android:max="100" />
+
+        <Switch
+            android:id="@+id/swSound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:minHeight="48dp"
+            android:textSize="15sp"
+            android:text="@string/sw_sound" />
+
+        <TextView
+            android:id="@+id/lblSound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/lbl_sound"
+            android:textSize="15sp" />
+
+        <SeekBar
+            android:id="@+id/seekSound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="44dp"
+            android:max="100" />
+
+        <!-- ============ Avisos hablados (1.0.8) ============ -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/section_alerts"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#0F766E" />
+
+        <Switch
+            android:id="@+id/swNotif"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:minHeight="48dp"
+            android:textSize="15sp"
+            android:text="@string/sw_notif" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/hint_notif"
+            android:textSize="13sp"
+            android:textColor="#64748B" />
+
+        <Switch
+            android:id="@+id/swEcho"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:minHeight="48dp"
+            android:textSize="15sp"
+            android:text="@string/sw_echo" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/hint_echo"
+            android:textSize="13sp"
+            android:textColor="#64748B" />
+
+        <!-- ============ Exploración de la pantalla ============ -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/section_explore"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#0F766E" />
+
+        <Switch
+            android:id="@+id/swTouch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:minHeight="48dp"
+            android:textSize="15sp"
+            android:text="@string/sw_touch" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/hint_touch"
+            android:textSize="13sp"
+            android:textColor="#64748B" />
+
+        <!-- ============ Botones principales ============ -->
+        <Button
+            android:id="@+id/btnApply"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:text="@string/btn_apply" />
+
+        <Button
+            android:id="@+id/btnCheckUpdates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="15sp"
+            android:text="@string/btn_check_updates" />
+
+        <Button
+            android:id="@+id/btnAbout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="15sp"
+            android:text="@string/btn_about" />
+
+        <Button
+            android:id="@+id/btnSource"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            android:textSize="15sp"
+            android:text="@string/btn_source" />
+    </LinearLayout>
+</ScrollView>
