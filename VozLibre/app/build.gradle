@@ -2,13 +2,66 @@ plugins {
     id 'com.android.application'
 }
 
-// Firma de release: si existe signing/vozlibre.jks (fuera del repositorio)
-// se firma con ella; si no, se firma con la clave de debug para que el
-// APK siempre sea instalable. Las contraseñas vienen de variables de entorno.
+// ---------------------------------------------------------------------------
+// FIRMA ESTABLE (firma continua entre versiones).
+// La clave vive en el repositorio en base64 (keystore/vozlibre.jks.b64) para
+// que CUALQUIER compilación (aquí o en GitHub Actions) firme SIEMPRE con la
+// misma clave y las actualizaciones se instalen una encima de otra sin
+// «firma incompatible». El .jks decodificado va a signing/ (ignorado por git).
+// Contraseñas: vozlibre2024 (se pueden sobrescribir con VOZLIBRE_STORE_PASS
+// y VOZLIBRE_KEY_PASS).
+// ---------------------------------------------------------------------------
 def ksFile = rootProject.file("signing/vozlibre.jks")
+def ksB64 = rootProject.file("keystore/vozlibre.jks.b64")
+if (!ksFile.exists() && ksB64.exists()) {
+    ksFile.parentFile.mkdirs()
+    ksFile.bytes = java.util.Base64.getDecoder().decode(
+            ksB64.text.replace('\n', '').replace('\r', '').trim())
+}
 def ksExists = ksFile.exists()
 def storePass = System.getenv("VOZLIBRE_STORE_PASS") ?: "vozlibre2024"
 def keyPass = System.getenv("VOZLIBRE_KEY_PASS") ?: "vozlibre2024"
+
+// ---------------------------------------------------------------------------
+// EARCONS: los 11 sonidos propios (.wav, dominio público). Se copian a
+// src/main/res/raw ANTES de compilar (en tiempo de configuración). Fuentes,
+// por orden:
+//   1. src/main/res-earcons/*.b64  (base64 dentro de esta carpeta, si existe)
+//   2. ../app/src/main/res/raw/*.wav  (los WAV originales comprometidos en
+//      el repositorio — mismo archivo, sonido EXACTAMENTE idéntico)
+// Así cualquier compilación (local o GitHub Actions) genera los mismos
+// sonidos sin binarios extra y sin dependencias externas.
+// ---------------------------------------------------------------------------
+def earconsB64Dir = file("src/main/res-earcons")
+def earconsRawDir = file("src/main/res/raw")
+// ../app/ respecto a la RAÍZ del proyecto (VozLibre/): los WAV históricos.
+def legacyWavDir = rootProject.file("../app/src/main/res/raw")
+earconsRawDir.mkdirs()
+int copied = 0
+if (earconsB64Dir.isDirectory()) {
+    earconsB64Dir.listFiles().findAll { it.name.endsWith('.b64') }.each { f ->
+        def out = new File(earconsRawDir,
+                f.name.replaceAll('\\.b64$', ''))
+        def bytes = java.util.Base64.getDecoder().decode(
+                f.text.replace('\n', '').replace('\r', '').trim())
+        if (!out.exists() || out.length() != bytes.length) {
+            out.bytes = bytes
+        }
+        copied++
+    }
+}
+if (copied == 0 && legacyWavDir.isDirectory()) {
+    legacyWavDir.listFiles().findAll { it.name.endsWith('.wav') }.each { f ->
+        def out = new File(earconsRawDir, f.name)
+        if (!out.exists() || out.length() != f.length()) {
+            out.bytes = f.bytes
+        }
+        copied++
+    }
+}
+if (copied == 0) {
+    logger.warn('AVISO: no se encontraron earcons (.b64 ni .wav): la app compilará sin sonidos propios.')
+}
 
 android {
     namespace 'com.vozlibre.reader'
